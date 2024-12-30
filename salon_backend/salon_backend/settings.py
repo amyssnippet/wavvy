@@ -11,13 +11,12 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-from mongoengine import connect
 
 # MongoDB connection
 from mongoengine import connect
 
 connect(
-    db="salon_app_db",  # Replace with your database name
+    db="salon_app_test_db",  # Replace with your database name
     host="mongodb+srv://amysnippet:amol6125@cluster0.abzff.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
 )
 
