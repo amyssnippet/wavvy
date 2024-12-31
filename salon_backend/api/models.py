@@ -1,4 +1,6 @@
-from mongoengine import Document, StringField, EmailField, ListField, IntField, DateTimeField, FileField, DateField, ReferenceField, BooleanField
+import os
+from django.conf import settings
+from mongoengine import Document, StringField, EmailField, ListField, IntField, DateTimeField, FileField, DateField, ReferenceField, BooleanField, ValidationError
 
 class Client(Document):
     client_name = StringField(required=True)
@@ -24,6 +26,14 @@ class Services(Document):
     price = IntField(min_value=0, required=True)
 
 class Business(Document):
+    
+    def validate_image_size(file):
+        max_size = 2 * 1024 * 1024
+        if file.size > max_size:
+            raise ValidationError("File size exceeds the 2 MB limit.")
+
+    
+    profile_img = FileField(required=False, validation=validate_image_size)
     owner_name = StringField(required=True)
     phone_number = StringField(required=True)
     salon_name = StringField(required=True, unique=True)
@@ -31,6 +41,28 @@ class Business(Document):
     gst = StringField(required=False, unique=True)
     # salon_location = 
     salon_description = StringField(required=False)
+    
+    def save_image(self, image_file):
+        """
+        Save the profile image with the MongoDB ID as the filename.
+        """
+        if not self.id:
+            self.save()  # Save the document first to generate an ID
+
+        model_dir = os.path.join(settings.MEDIA_ROOT, "business")
+        os.makedirs(model_dir, exist_ok=True)  # Create the directory if it doesn't exist
+
+        # Use the MongoDB ID as the filename
+        file_extension = os.path.splitext(image_file.name)[1]
+        image_path = os.path.join(model_dir, f"{str(self.id)}{file_extension}")
+
+        # Save the image file
+        with open(image_path, "wb") as f:
+            f.write(image_file.read())
+
+        # Store the relative path in the profile_img field
+        self.profile_img = os.path.relpath(image_path, settings.MEDIA_ROOT)
+        self.save()
 
 class TeamMember(Document):
     profile_img = StringField(required=False,null=True)

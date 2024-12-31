@@ -1,92 +1,103 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.conf import settings
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from .models import Business, Customer, Services, TeamMember, Client, Appointment
 from .serializers import BusinessSerializer, CustomerSerializer, ServicesSerializer, TeamMemberSerializer, ClientSerializer, AppointmentSerializer
 from mongoengine.errors import DoesNotExist, ValidationError
 
-
 class BusinessAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)  # For handling file uploads
+
     def get(self, request):
+        """
+        Retrieve all businesses with their details, including image URLs.
+        """
         businesses = Business.objects.all()
-        serializer = BusinessSerializer(businesses, many=True)
-        return Response([{
-            'id': str(business.id),
-            'owner_name': business.owner_name,
-            'phone_number': business.phone_number,
-            'salon_name': business.salon_name,
-            'owner_email': business.owner_email,
-            'gst': business.gst,
-            'salon_description': business.salon_description
-        } for business in businesses])
+        return Response([
+            {
+                'id': str(business.id),
+                'owner_name': business.owner_name,
+                'phone_number': business.phone_number,
+                'salon_name': business.salon_name, #business_name
+                'owner_email': business.owner_email,
+                'gst': business.gst,
+                'salon_description': business.salon_description,
+                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
+            } for business in businesses
+        ])
 
     def post(self, request):
+        """
+        Create a new business object with an optional profile image.
+        """
         serializer = BusinessSerializer(data=request.data)
         if serializer.is_valid():
             business = serializer.save()
+            if 'profile_img' in request.FILES:
+                business.save_image(request.FILES['profile_img'])  # Save profile image
             return Response({
                 'id': str(business.id),
-                **serializer.validated_data
+                **serializer.validated_data,
+                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class BusinessDetailAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)  # For handling file uploads
+
     def get(self, request, pk):
         """
-        Retrieve a specific Business object by its id.
+        Retrieve a specific Business object by its ID, including the image URL.
         """
         try:
             business = Business.objects.get(id=pk)
-            serializer = BusinessSerializer({
+            return Response({
                 'id': str(business.id),
                 'owner_name': business.owner_name,
                 'phone_number': business.phone_number,
                 'salon_name': business.salon_name,
                 'owner_email': business.owner_email,
                 'gst': business.gst,
-                'salon_description': business.salon_description
+                'salon_description': business.salon_description,
+                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
             })
-            return Response(serializer.data)
-        except DoesNotExist:
+        except Business.DoesNotExist:
             return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
         """
-        Update a specific Business object by its id.
+        Update a specific Business object by its ID, including updating the profile image.
         """
         try:
             business = Business.objects.get(id=pk)
-        except DoesNotExist:
+        except Business.DoesNotExist:
             return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = BusinessSerializer(data=request.data)
+        serializer = BusinessSerializer(instance=business, data=request.data, partial=True)  # Allow partial updates
         if serializer.is_valid():
-            # Update fields individually
-            for key, value in serializer.validated_data.items():
-                setattr(business, key, value)
-            business.save()
+            if 'profile_img' in request.FILES:
+                business.save_image(request.FILES['profile_img'])  # Update the profile image
+            serializer.save()
             return Response({
                 'id': str(business.id),
-                **serializer.validated_data
+                **serializer.validated_data,
+                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         """
-        Delete a specific Business object by its id.
+        Delete a specific Business object by its ID.
         """
         try:
             business = Business.objects.get(id=pk)
             business.delete()
             return Response({'message': 'Business deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except DoesNotExist:
+        except Business.DoesNotExist:
             return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomerAPIView(APIView):
     def get(self, request):
@@ -94,10 +105,11 @@ class CustomerAPIView(APIView):
         serializer = CustomerSerializer(customers, many=True)
         return Response([{
             'id': str(customer.id),
-            'name': customer.customer_name,
-            'phone_number': customer.customer_phone,
-            'email': customer.customer_email,
-            'address': customer.customer_address
+            'customer_name': customer.customer_name,
+            'customer_phone': customer.customer_phone,
+            'customer_reviews': customer.customer_reviews,
+            'booked_at': customer.booked_at,
+            
         } for customer in customers])
 
     def post(self, request):
@@ -119,10 +131,11 @@ class CustomerDetailAPIView(APIView):
             customer = Customer.objects.get(id=pk)
             serializer = CustomerSerializer({
                 'id': str(customer.id),
-                'name': customer.customer_name,
-                'phone_number': customer.customer_phone,
-                'email': customer.customer_email,
-                'address': customer.customer_address
+                'customer_name': customer.customer_name,
+                'customer_phone': customer.customer_phone,
+                'customer_reviews': customer.customer_reviews,
+                'booked_at': customer.booked_at,
+                'scheduled_date': customer.scheduled_date
             })
             return Response(serializer.data)
         except DoesNotExist:
@@ -136,20 +149,15 @@ class CustomerDetailAPIView(APIView):
         """
         try:
             customer = Customer.objects.get(id=pk)
-        except DoesNotExist:
-            return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+        except Customer.DoesNotExist:
+            return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = CustomerSerializer(data=request.data)
+        serializer = CustomerSerializer(customer, data=request.data)
         if serializer.is_valid():
-            # Update fields individually
-            for key, value in serializer.validated_data.items():
-                setattr(customer, key, value)
-            customer.save()
+            customer = serializer.save()
             return Response({
-                'id': str(customer.id),
-                **serializer.validated_data
+                "id": str(customer.id),
+                **serializer.validated_data,
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -18,6 +18,13 @@ class BusinessSerializer(serializers.Serializer):
             raise serializers.ValidationError("GST preowned by other business")
         return value
     
+    def validate_profile_image(self, file):
+        max_size = 2 * 1024 * 1024
+        if file and file.size > max_size:
+            raise serializers.ValidationError("File size must be less than 2 MB.")
+        return file
+    
+    profile_img = serializers.FileField(required=False, allow_empty_file=True, max_length=None, error_messages={'invalid': 'Image files only'}, validators=[validate_profile_image])
     id = serializers.CharField(read_only=True)
     owner_name = serializers.CharField(required=True)
     phone_number = serializers.CharField(required=True, validators=[validate_unique_phone_number])
@@ -27,24 +34,33 @@ class BusinessSerializer(serializers.Serializer):
     salon_description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     def create(self, validated_data):
-        return Business.objects.create(**validated_data)
+        business = Business(
+            owner_name=validated_data['owner_name'],
+            phone_number=validated_data['phone_number'],
+            salon_name=validated_data['salon_name'],
+            owner_email=validated_data['owner_email'],
+            gst=validated_data.get('gst'),
+            salon_description=validated_data.get('salon_description')
+        )
+        if 'profile_img' in validated_data:
+            business.save_image(validated_data['profile_img'])
+        business.save()
+        return business
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+            if attr == 'profile_img' and value:
+                instance.save_image(value)
+            else:
+                setattr(instance, attr, value)
         instance.save()
         return instance
 
 class CustomerSerializer(serializers.Serializer):
-    
-    def validate_unique_customer_phone(value):
-        if Customer.objects.filter(phone_number=value).first():
-            raise serializers.ValidationError("Phone number already exists")
-        return value
-    
+        
     id = serializers.CharField(read_only=True)
     customer_name = serializers.CharField(required=True)
-    customer_phone = serializers.CharField(required=True, validators=[validate_unique_customer_phone])
+    customer_phone = serializers.CharField(required=True)
     customer_reviews = serializers.ChoiceField(choices=["Good","Bad"],required=True)
     booked_at = serializers.DateField(required=True)
     scheduled_date = serializers.DateTimeField(required=True)
@@ -142,13 +158,14 @@ class ClientSerializer(serializers.Serializer):
         return attrs
     
 class AppointmentSerializer(serializers.Serializer):
+    
     id = serializers.CharField(read_only=True)
     customer = serializers.CharField(required=True)
     appointment_date = serializers.DateField(required=True)
     appointment_time = serializers.TimeField(required=True)
     services = serializers.ListField(child=serializers.CharField())
     assigned_team_member = serializers.CharField(read_only=True)
-    status = serializers.ChoiceField(choices=["Booked","Confirmed","Cancelled","Completed"],read_only=True, required=True)
+    status = serializers.ChoiceField(choices=["Booked","Confirmed","Cancelled","Completed"],required=True)
 
     def create(self, validated_data):
         try:

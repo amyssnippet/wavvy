@@ -19,5 +19,18 @@ from django.contrib import admin
 from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('api/', include('api.urls')),
+    path('api/', include('api.urls')),  # Include the API URLs
 ]
+
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+MEDIA_URL = '/media/'  # This is the URL that will serve your media files
+MEDIA_ROOT = BASE_DIR / 'media'  # This is the directory where the media files will be stored
+
+DEBUG = True
+
+if DEBUG:
+    from django.conf.urls.static import static
+    urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)
