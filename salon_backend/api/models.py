@@ -58,4 +58,9 @@ class Appointment(Document):
     select_service = ListField(ReferenceField(Services))
     select_staff = ReferenceField(TeamMember, required=False)
     customer = ReferenceField(Client, required=True)
-    appointment_date = DateTimeField(required=True)
+    appointment_date = DateField(required=True)
+    appointment_time = DateTimeField(required=True)
+    status = StringField(
+        required=True,
+        choices=["Booked","Confirmed","Cancelled","Completed"],
+    )

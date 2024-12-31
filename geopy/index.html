@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Location Fetcher</title>
+</head>
+<body>
+  <h1>Get Current Location</h1>
+  <button id="getLocation">Fetch Location</button>
+  <p id="response"></p>
+
+  <script>
+    document.getElementById("getLocation").addEventListener("click", function () {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+
+            // Send location to backend
+            fetch("http://127.0.0.1:8000/store-location/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ latitude, longitude }),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                document.getElementById("response").innerText = JSON.stringify(data, null, 2);
+              })
+              .catch((error) => {
+                document.getElementById("response").innerText = `Error: ${error}`;
+              });
+          },
+          (error) => {
+            console.error("Error fetching location:", error.message);
+            document.getElementById("response").innerText = "Error fetching location.";
+          }
+        );
+      } else {
+        document.getElementById("response").innerText = "Geolocation is not supported by your browser.";
+      }
+    });
+  </script>
+</body>
+</html>

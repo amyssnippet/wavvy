@@ -145,8 +145,10 @@ class AppointmentSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
     customer = serializers.CharField(required=True)
     appointment_date = serializers.DateField(required=True)
+    appointment_time = serializers.TimeField(required=True)
     services = serializers.ListField(child=serializers.CharField())
     assigned_team_member = serializers.CharField(read_only=True)
+    status = serializers.ChoiceField(choices=["Booked","Confirmed","Cancelled","Completed"],read_only=True, required=True)
 
     def create(self, validated_data):
         try:

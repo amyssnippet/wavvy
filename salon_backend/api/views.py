@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Business, Customer, Services, TeamMember, Client
-from .serializers import BusinessSerializer, CustomerSerializer, ServicesSerializer, TeamMemberSerializer, ClientSerializer
+from .models import Business, Customer, Services, TeamMember, Client, Appointment
+from .serializers import BusinessSerializer, CustomerSerializer, ServicesSerializer, TeamMemberSerializer, ClientSerializer, AppointmentSerializer
 from mongoengine.errors import DoesNotExist, ValidationError
 
 
@@ -406,5 +406,87 @@ class ClientDetailAPIView(APIView):
             return Response({'message': 'Client deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
         except DoesNotExist:
             return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError:
+            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+        
+class AppointmentAPIView(APIView):
+    def get(self, request):
+        appointments = Appointment.objects.all()
+        serializer = AppointmentSerializer(appointments, many=True)
+        return Response([{
+            'id': str(appointment.id),
+            'customer': appointment.customer,
+            'appointment_date': appointment.appointment_date,
+            'appointment_time': appointment.appointment_time,
+            'services': appointment.services,
+            'assigned_team_member': appointment.assigned_team_member,
+            'status': appointment.status
+        } for appointment in appointments])
+
+    def post(self, request):
+        serializer = AppointmentSerializer(data=request.data)
+        if serializer.is_valid():
+            appointment = serializer.save()
+            return Response({
+                'id': str(appointment.id),
+                **serializer.validated_data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class AppointmentDetailAPIView(APIView):
+    def get(self, request, pk):
+        """
+        Retrieve a specific Appointment object by its id.
+        """
+        try:
+            appointment = Appointment.objects.get(id=pk)
+            serializer = AppointmentSerializer({
+                'id': str(appointment.id),
+                'customer': appointment.customer,
+                'appointment_date': appointment.appointment_date,
+                'appointment_time': appointment.appointment_time,
+                'services': appointment.services,
+                'assigned_team_member': appointment.assigned_team_member,
+                'status': appointment.status
+            })
+            return Response(serializer.data)
+        except DoesNotExist:
+            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError:
+            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk):
+        """
+        Update a specific Appointment object by its id.
+        """
+        try:
+            appointment = Appointment.objects.get(id=pk)
+        except DoesNotExist:
+            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError:
+            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = AppointmentSerializer(data=request.data)
+        if serializer.is_valid():
+            # Update fields individually
+            for key, value in serializer.validated_data.items():
+                setattr(appointment, key, value)
+            appointment.save()
+            return Response({
+                'id': str(appointment.id),
+                **serializer.validated_data
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        """
+        Delete a specific Appointment object by its id.
+        """
+        try:
+            appointment = Appointment.objects.get(id=pk)
+            appointment.delete()
+            return Response({'message': 'Appointment deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except DoesNotExist:
+            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
         except ValidationError:
             return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
