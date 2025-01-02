@@ -49,7 +49,7 @@ class Business(models.Model):
     phone_number = models.CharField(max_length=15, unique=True)
     salon_name = models.CharField(max_length=255, unique=True)
     owner_email = models.EmailField(unique=True)
-    gst = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    gst = models.CharField(max_length=50, null=True, blank=True)
     salon_description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -58,7 +58,8 @@ class Business(models.Model):
 
 class TeamMember(models.Model):
     profile_img = models.ImageField(upload_to="team_members", null=True, blank=True)
-    member_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15, unique=True)
     member_email = models.EmailField(unique=True)
     date_of_joining = models.DateField()
@@ -69,7 +70,7 @@ class TeamMember(models.Model):
     is_available = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.member_name
+        return f"{self.first_name} {self.last_name}"
 
 
 class Appointment(models.Model):

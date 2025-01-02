@@ -10,11 +10,13 @@ from .serializers import (
     TeamMemberSerializer,
     AppointmentSerializer,
 )
+from rest_framework.parsers import MultiPartParser, FormParser 
 
 
 class BusinessListCreateView(generics.ListCreateAPIView):
     queryset = Business.objects.all()
     serializer_class = BusinessSerializer
+    parser_classes = [MultiPartParser, FormParser]
 
 
 class BusinessDetailView(generics.RetrieveUpdateDestroyAPIView):
