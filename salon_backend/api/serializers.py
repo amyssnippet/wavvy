@@ -1,197 +1,32 @@
 from rest_framework import serializers
-from .models import Business, Customer, Services, TeamMember, Client, Appointment
+from .models import Business, Client, Services, TeamMember, Appointment
 
-class BusinessSerializer(serializers.Serializer):
-    
-    def validate_unique_phone_number(value):
-        if TeamMember.objects.filter(phone_number=value).first():
-            raise serializers.ValidationError("Phone number already exists")
-        return value
-    
-    def validate_unique_owner_email(value):
-        if TeamMember.objects.filter(member_email=value).first():
-            raise serializers.ValidationError("Email already exists")
-        return value
-    
-    def validate_unique_gst(value):
-        if Business.objects.filter(gst=value).first():
-            raise serializers.ValidationError("GST preowned by other business")
-        return value
-    
-    def validate_profile_image(self, file):
-        max_size = 2 * 1024 * 1024
-        if file and file.size > max_size:
-            raise serializers.ValidationError("File size must be less than 2 MB.")
-        return file
-    
-    profile_img = serializers.FileField(required=False, allow_empty_file=True, max_length=None, error_messages={'invalid': 'Image files only'}, validators=[validate_profile_image])
-    id = serializers.CharField(read_only=True)
-    owner_name = serializers.CharField(required=True)
-    phone_number = serializers.CharField(required=True, validators=[validate_unique_phone_number])
-    salon_name = serializers.CharField(required=True)
-    owner_email = serializers.EmailField(required=True, validators=[validate_unique_owner_email])
-    gst = serializers.CharField(required=False, allow_blank=True, allow_null=True, validators=[validate_unique_gst])
-    salon_description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
-    def create(self, validated_data):
-        business = Business(
-            owner_name=validated_data['owner_name'],
-            phone_number=validated_data['phone_number'],
-            salon_name=validated_data['salon_name'],
-            owner_email=validated_data['owner_email'],
-            gst=validated_data.get('gst'),
-            salon_description=validated_data.get('salon_description')
-        )
-        if 'profile_img' in validated_data:
-            business.save_image(validated_data['profile_img'])
-        business.save()
-        return business
+class BusinessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Business
+        fields = "__all__"
 
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            if attr == 'profile_img' and value:
-                instance.save_image(value)
-            else:
-                setattr(instance, attr, value)
-        instance.save()
-        return instance
 
-class CustomerSerializer(serializers.Serializer):
-        
-    id = serializers.CharField(read_only=True)
-    customer_name = serializers.CharField(required=True)
-    customer_phone = serializers.CharField(required=True)
-    customer_reviews = serializers.ChoiceField(choices=["Good","Bad"],required=True)
-    booked_at = serializers.DateField(required=True)
-    scheduled_date = serializers.DateTimeField(required=True)
-    
-    def create(self, validated_data):
-        return Customer.objects.create(**validated_data)
-    
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
-    
-class ServicesSerializer(serializers.Serializer):
-    
-    id = serializers.CharField(read_only=True)
-    service_name = serializers.CharField(required=True)
-    service_type = serializers.ChoiceField(choices=["Basic", "Premium", "Add-on"],required=True)
-    menu_category = serializers.CharField(required=True)
-    duration_in_mins = serializers.IntegerField(required=True)
-    price = serializers.IntegerField(required=True)
-    
-    def create(self, validated_data):
-        return Services.objects.create(**validated_data)
-    
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
-    
-class TeamMemberSerializer(serializers.Serializer):
-    
-    def validate_unique_phone_number(value):
-        if TeamMember.objects.filter(phone_number=value).first():
-            raise serializers.ValidationError("Phone number already exists")
-        return value
-    
-    def validate_unique_member_email(value):
-        if TeamMember.objects.filter(member_email=value).first():
-            raise serializers.ValidationError("Email already exists")
-        return value
-    
-    id = serializers.CharField(read_only=True)
-    profile_img = serializers.CharField(required=False)
-    member_name = serializers.CharField(required=True)
-    phone_number = serializers.CharField(required=True, validators=[validate_unique_phone_number])
-    member_email = serializers.EmailField(required=True, validators=[validate_unique_member_email])
-    date_of_joining = serializers.DateField(required=True)
-    access_type = serializers.CharField(required=True)
-    
-    def create(self, validated_data):
-        return TeamMember.objects.create(**validated_data)
-    
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
-    
-class ClientSerializer(serializers.Serializer):
-    
-    def validate_unique_client_phone(value):
-        if Client.objects.filter(client_phone=value).first():
-            raise serializers.ValidationError("Phone number already exists")
-        return value
-    
-    def validate_unique_client_email(value):
-        if Client.objects.filter(client_email=value).first():
-            raise serializers.ValidationError("Email already exists")
-        return value
-    
-    id = serializers.CharField(read_only=True)
-    client_name = serializers.CharField(required=True)
-    client_type = serializers.CharField(required=True)
-    client_email = serializers.EmailField(required=True, validators=[validate_unique_client_email])
-    client_phone = serializers.CharField(required=True, validators=[validate_unique_client_phone])
-    client_dob = serializers.DateField(required=False, allow_null=True)
-    
-    def create(self, validated_data):
-        return Client.objects.create(**validated_data)
-    
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
-    
-    def validate(self, attrs):
-        # Check if a client with the same phone number or email already exists
-        if Client.objects.filter(phone_number=attrs['phone_number']).first():
-            raise serializers.ValidationError("A client with this phone number already exists.")
-        if 'email' in attrs and Client.objects.filter(email=attrs['email']).first():
-            raise serializers.ValidationError("A client with this email already exists.")
-        return attrs
-    
-class AppointmentSerializer(serializers.Serializer):
-    
-    id = serializers.CharField(read_only=True)
-    customer = serializers.CharField(required=True)
-    appointment_date = serializers.DateField(required=True)
-    appointment_time = serializers.TimeField(required=True)
-    services = serializers.ListField(child=serializers.CharField())
-    assigned_team_member = serializers.CharField(read_only=True)
-    status = serializers.ChoiceField(choices=["Booked","Confirmed","Cancelled","Completed"],required=True)
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = "__all__"
 
-    def create(self, validated_data):
-        try:
-            client = Client.objects.get(id=validated_data.pop('customer'))
-        except Client.DoesNotExist:
-            raise serializers.ValidationError("Client not found.")
-        team_member = TeamMember.objects.filter(is_available=True).first()
-        if not team_member:
-            raise serializers.ValidationError("No available team member found.")
 
-        appointment = Appointment.objects.create(
-            customer=client, 
-            assigned_team_member=team_member, 
-            **validated_data
-        )
+class ServicesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Services
+        fields = "__all__"
 
-        client.appointment_history.append(appointment)
-        client.save()
 
-        team_member.is_available = False
-        team_member.save()
+class TeamMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamMember
+        fields = "__all__"
 
-        return appointment
-    
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = "__all__"

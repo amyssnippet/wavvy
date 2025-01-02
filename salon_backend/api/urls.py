@@ -1,15 +1,24 @@
 from django.urls import path
-from .views import BusinessAPIView, BusinessDetailAPIView, CustomerAPIView, CustomerDetailAPIView, ServicesAPIView, ServicesDetailAPIView, TeamMemberAPIView, TeamMemberDetailAPIView, ClientAPIView, ClientDetailAPIView
+from . import views
 
 urlpatterns = [
-    path('businesses/', BusinessAPIView.as_view(), name='business-list'), 
-    path('businesses/<str:pk>/', BusinessDetailAPIView.as_view(), name='business-detail'),
-    path('customers/', CustomerAPIView.as_view(), name='customer-list'),
-    path('customers/<str:pk>/', CustomerDetailAPIView.as_view(), name='customer-detail'),
-    path('services/', ServicesAPIView.as_view(), name='services-list'),
-    path('services/<str:pk>/', ServicesDetailAPIView.as_view(), name='services-detail'),
-    path('team-members/', TeamMemberAPIView.as_view(), name='team-member-list'),
-    path('team-members/<str:pk>/', TeamMemberDetailAPIView.as_view(), name='team-member-detail'),
-    path('clients/', ClientAPIView.as_view(), name='client-list'),
-    path('clients/<str:pk>/', ClientDetailAPIView.as_view(), name='client-detail')
+    # Business endpoints
+    path('business/', views.BusinessListCreateView.as_view(), name='business-list-create'),
+    path('business/<int:pk>/', views.BusinessDetailView.as_view(), name='business-detail'),
+
+    # Client endpoints
+    path('clients/', views.ClientListCreateView.as_view(), name='client-list-create'),
+    path('clients/<int:pk>/', views.ClientDetailView.as_view(), name='client-detail'),
+
+    # Services endpoints
+    path('services/', views.ServicesListCreateView.as_view(), name='services-list-create'),
+    path('services/<int:pk>/', views.ServicesDetailView.as_view(), name='services-detail'),
+
+    # Team Member endpoints
+    path('team/', views.TeamMemberListCreateView.as_view(), name='team-list-create'),
+    path('team/<int:pk>/', views.TeamMemberDetailView.as_view(), name='team-detail'),
+
+    # Appointment endpoints
+    path('appointments/', views.AppointmentListCreateView.as_view(), name='appointment-list-create'),
+    path('appointments/<int:pk>/', views.AppointmentDetailView.as_view(), name='appointment-detail'),
 ]

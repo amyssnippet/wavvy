@@ -1,500 +1,62 @@
-from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
-from django.conf import settings
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework import status
-from .models import Business, Customer, Services, TeamMember, Client, Appointment
-from .serializers import BusinessSerializer, CustomerSerializer, ServicesSerializer, TeamMemberSerializer, ClientSerializer, AppointmentSerializer
-from mongoengine.errors import DoesNotExist, ValidationError
-
-class BusinessAPIView(APIView):
-    parser_classes = (MultiPartParser, FormParser)  # For handling file uploads
-
-    def get(self, request):
-        """
-        Retrieve all businesses with their details, including image URLs.
-        """
-        businesses = Business.objects.all()
-        return Response([
-            {
-                'id': str(business.id),
-                'owner_name': business.owner_name,
-                'phone_number': business.phone_number,
-                'salon_name': business.salon_name, #business_name
-                'owner_email': business.owner_email,
-                'gst': business.gst,
-                'salon_description': business.salon_description,
-                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
-            } for business in businesses
-        ])
-
-    def post(self, request):
-        """
-        Create a new business object with an optional profile image.
-        """
-        serializer = BusinessSerializer(data=request.data)
-        if serializer.is_valid():
-            business = serializer.save()
-            if 'profile_img' in request.FILES:
-                business.save_image(request.FILES['profile_img'])  # Save profile image
-            return Response({
-                'id': str(business.id),
-                **serializer.validated_data,
-                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from .models import Business, Client, Services, TeamMember, Appointment
+from .serializers import (
+    BusinessSerializer,
+    ClientSerializer,
+    ServicesSerializer,
+    TeamMemberSerializer,
+    AppointmentSerializer,
+)
 
 
-class BusinessDetailAPIView(APIView):
-    parser_classes = (MultiPartParser, FormParser)  # For handling file uploads
+class BusinessListCreateView(generics.ListCreateAPIView):
+    queryset = Business.objects.all()
+    serializer_class = BusinessSerializer
 
-    def get(self, request, pk):
-        """
-        Retrieve a specific Business object by its ID, including the image URL.
-        """
-        try:
-            business = Business.objects.get(id=pk)
-            return Response({
-                'id': str(business.id),
-                'owner_name': business.owner_name,
-                'phone_number': business.phone_number,
-                'salon_name': business.salon_name,
-                'owner_email': business.owner_email,
-                'gst': business.gst,
-                'salon_description': business.salon_description,
-                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
-            })
-        except Business.DoesNotExist:
-            return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    def put(self, request, pk):
-        """
-        Update a specific Business object by its ID, including updating the profile image.
-        """
-        try:
-            business = Business.objects.get(id=pk)
-        except Business.DoesNotExist:
-            return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
+class BusinessDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Business.objects.all()
+    serializer_class = BusinessSerializer
 
-        serializer = BusinessSerializer(instance=business, data=request.data, partial=True)  # Allow partial updates
-        if serializer.is_valid():
-            if 'profile_img' in request.FILES:
-                business.save_image(request.FILES['profile_img'])  # Update the profile image
-            serializer.save()
-            return Response({
-                'id': str(business.id),
-                **serializer.validated_data,
-                'profile_img': f"{settings.MEDIA_URL}{business.profile_img}" if business.profile_img else None
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
-        """
-        Delete a specific Business object by its ID.
-        """
-        try:
-            business = Business.objects.get(id=pk)
-            business.delete()
-            return Response({'message': 'Business deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except Business.DoesNotExist:
-            return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
+class ClientListCreateView(generics.ListCreateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
 
-class CustomerAPIView(APIView):
-    def get(self, request):
-        customers = Customer.objects.all()
-        serializer = CustomerSerializer(customers, many=True)
-        return Response([{
-            'id': str(customer.id),
-            'customer_name': customer.customer_name,
-            'customer_phone': customer.customer_phone,
-            'customer_reviews': customer.customer_reviews,
-            'booked_at': customer.booked_at,
-            
-        } for customer in customers])
 
-    def post(self, request):
-        serializer = CustomerSerializer(data=request.data)
-        if serializer.is_valid():
-            customer = serializer.save()
-            return Response({
-                'id': str(customer.id),
-                **serializer.validated_data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class CustomerDetailAPIView(APIView):
-    def get(self, request, pk):
-        """
-        Retrieve a specific Customer object by its id.
-        """
-        try:
-            customer = Customer.objects.get(id=pk)
-            serializer = CustomerSerializer({
-                'id': str(customer.id),
-                'customer_name': customer.customer_name,
-                'customer_phone': customer.customer_phone,
-                'customer_reviews': customer.customer_reviews,
-                'booked_at': customer.booked_at,
-                'scheduled_date': customer.scheduled_date
-            })
-            return Response(serializer.data)
-        except DoesNotExist:
-            return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+class ClientDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
 
-    def put(self, request, pk):
-        """
-        Update a specific Customer object by its id.
-        """
-        try:
-            customer = Customer.objects.get(id=pk)
-        except Customer.DoesNotExist:
-            return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = CustomerSerializer(customer, data=request.data)
-        if serializer.is_valid():
-            customer = serializer.save()
-            return Response({
-                "id": str(customer.id),
-                **serializer.validated_data,
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class ServicesListCreateView(generics.ListCreateAPIView):
+    queryset = Services.objects.all()
+    serializer_class = ServicesSerializer
 
-    def delete(self, request, pk):
-        """
-        Delete a specific Customer object by its id.
-        """
-        try:
-            customer = Customer.objects.get(id=pk)
-            customer.delete()
-            return Response({'message': 'Customer deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except DoesNotExist:
-            return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
-        
-class ServicesAPIView(APIView):
-    def get(self, request):
-        services = Services.objects.all()
-        serializer = ServicesSerializer(services, many=True)
-        return Response([{
-            'id': str(service.id),
-            'service_name': service.service_name,
-            'service_type': service.service_type,
-            'menu_category': service.menu_category,
-            'duration_in_mins': service.duration_in_mins,
-            'price': service.price
-        } for service in services])
 
-    def post(self, request):
-        serializer = ServicesSerializer(data=request.data)
-        if serializer.is_valid():
-            service = serializer.save()
-            return Response({
-                'id': str(service.id),
-                **serializer.validated_data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class ServicesDetailAPIView(APIView):
-    def get(self, request, pk):
-        """
-        Retrieve a specific Services object by its id.
-        """
-        try:
-            service = Services.objects.get(id=pk)
-            serializer = ServicesSerializer({
-                'id': str(service.id),
-                'service_name': service.service_name,
-                'service_type': service.service_type,
-                'menu_category': service.menu_category,
-                'duration_in_mins': service.duration_in_mins,
-                'price': service.price
-            })
-            return Response(serializer.data)
-        except DoesNotExist:
-            return Response({'error': 'Services not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+class ServicesDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Services.objects.all()
+    serializer_class = ServicesSerializer
 
-    def put(self, request, pk):
-        """
-        Update a specific Services object by its id.
-        """
-        try:
-            service = Services.objects.get(id=pk)
-        except DoesNotExist:
-            return Response({'error': 'Services not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ServicesSerializer(data=request.data)
-        if serializer.is_valid():
-            # Update fields individually
-            for key, value in serializer.validated_data.items():
-                setattr(service, key, value)
-            service.save()
-            return Response({
-                'id': str(service.id),
-                **serializer.validated_data
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class TeamMemberListCreateView(generics.ListCreateAPIView):
+    queryset = TeamMember.objects.all()
+    serializer_class = TeamMemberSerializer
 
-    def delete(self, request, pk):
-        """
-        Delete a specific Services object by its id.
-        """
-        try:
-            service = Services.objects.get(id=pk)
-            service.delete()
-            return Response({'message': 'Services deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except DoesNotExist:
-            return Response({'error': 'Services not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
-        
-class TeamMemberAPIView(APIView):
-    def get(self, request):
-        team_members = TeamMember.objects.all()
-        serializer = TeamMemberSerializer(team_members, many=True)
-        return Response([{
-            'id': str(member.id),
-            'profile_img': member.profile_img,
-            'member_name': member.member_name,
-            'phone_number': member.phone_number,
-            'member_email': member.member_email,
-            'date_of_joining': member.date_of_joining,
-            'access_type': member.access_type
-        } for member in team_members])
 
-    def post(self, request):
-        serializer = TeamMemberSerializer(data=request.data)
-        if serializer.is_valid():
-            member = serializer.save()
-            return Response({
-                'id': str(member.id),
-                **serializer.validated_data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class TeamMemberDetailAPIView(APIView):
-    def get(self, request, pk):
-        """
-        Retrieve a specific TeamMember object by its id.
-        """
-        try:
-            member = TeamMember.objects.get(id=pk)
-            serializer = TeamMemberSerializer({
-                'id': str(member.id),
-                'profile_img': member.profile_img,
-                'member_name': member.member_name,
-                'phone_number': member.phone_number,
-                'member_email': member.member_email,
-                'date_of_joining': member.date_of_joining,
-                'access_type': member.access_type
-            })
-            return Response(serializer.data)
-        except DoesNotExist:
-            return Response({'error': 'TeamMember not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+class TeamMemberDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = TeamMember.objects.all()
+    serializer_class = TeamMemberSerializer
 
-    def put(self, request, pk):
-        """
-        Update a specific TeamMember object by its id.
-        """
-        try:
-            member = TeamMember.objects.get(id=pk)
-        except DoesNotExist:
-            return Response({'error': 'TeamMember not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = TeamMemberSerializer(data=request.data)
-        if serializer.is_valid():
-            # Update fields individually
-            for key, value in serializer.validated_data.items():
-                setattr(member, key, value)
-            member.save()
-            return Response({
-                'id': str(member.id),
-                **serializer.validated_data
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class AppointmentListCreateView(generics.ListCreateAPIView):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
 
-    def delete(self, request, pk):
-        """
-        Delete a specific TeamMember object by its id.
-        """
-        try:
-            member = TeamMember.objects.get(id=pk)
-            member.delete()
-            return Response({'message': 'TeamMember deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except DoesNotExist:
-            return Response({'error': 'TeamMember not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
-        
-class ClientAPIView(APIView):
-    def get(self, request):
-        clients = Client.objects.all()
-        serializer = ClientSerializer(clients, many=True)
-        return Response([{
-            'id': str(client.id),
-            'client_name': client.client_name,
-            'client_type': client.client_type,
-            'client_email': client.client_email,
-            'client_phone': client.client_phone,
-            'client_dob': client.client_dob,
-        } for client in clients])
-        
-    def post(self, request):
-        serializer = ClientSerializer(data=request.data)
-        if serializer.is_valid():
-            client = serializer.save()
-            return Response({
-                'id': str(client.id),
-                **serializer.validated_data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
-class ClientDetailAPIView(APIView):
-    def get(self, request, pk):
-        """
-        Retrieve a specific Client object by its id.
-        """
-        try:
-            client = Client.objects.get(id=pk)
-            serializer = ClientSerializer({
-                'id': str(client.id),
-                'client_name': client.client_name,
-                'client_type': client.client_type,
-                'client_email': client.client_email,
-                'client_phone': client.client_phone,
-                'client_dob': client.client_dob,
-            })
-            return Response(serializer.data)
-        except DoesNotExist:
-            return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, pk):
-        """
-        Update a specific Client object by its id.
-        """
-        try:
-            client = Client.objects.get(id=pk)
-        except DoesNotExist:
-            return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = ClientSerializer(data=request.data)
-        if serializer.is_valid():
-            # Update fields individually
-            for key, value in serializer.validated_data.items():
-                setattr(client, key, value)
-            client.save()
-            return Response({
-                'id': str(client.id),
-                **serializer.validated_data
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        """
-        Delete a specific Client object by its id.
-        """
-        try:
-            client = Client.objects.get(id=pk)
-            client.delete()
-            return Response({'message': 'Client deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except DoesNotExist:
-            return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
-        
-class AppointmentAPIView(APIView):
-    def get(self, request):
-        appointments = Appointment.objects.all()
-        serializer = AppointmentSerializer(appointments, many=True)
-        return Response([{
-            'id': str(appointment.id),
-            'customer': appointment.customer,
-            'appointment_date': appointment.appointment_date,
-            'appointment_time': appointment.appointment_time,
-            'services': appointment.services,
-            'assigned_team_member': appointment.assigned_team_member,
-            'status': appointment.status
-        } for appointment in appointments])
-
-    def post(self, request):
-        serializer = AppointmentSerializer(data=request.data)
-        if serializer.is_valid():
-            appointment = serializer.save()
-            return Response({
-                'id': str(appointment.id),
-                **serializer.validated_data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class AppointmentDetailAPIView(APIView):
-    def get(self, request, pk):
-        """
-        Retrieve a specific Appointment object by its id.
-        """
-        try:
-            appointment = Appointment.objects.get(id=pk)
-            serializer = AppointmentSerializer({
-                'id': str(appointment.id),
-                'customer': appointment.customer,
-                'appointment_date': appointment.appointment_date,
-                'appointment_time': appointment.appointment_time,
-                'services': appointment.services,
-                'assigned_team_member': appointment.assigned_team_member,
-                'status': appointment.status
-            })
-            return Response(serializer.data)
-        except DoesNotExist:
-            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, pk):
-        """
-        Update a specific Appointment object by its id.
-        """
-        try:
-            appointment = Appointment.objects.get(id=pk)
-        except DoesNotExist:
-            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = AppointmentSerializer(data=request.data)
-        if serializer.is_valid():
-            # Update fields individually
-            for key, value in serializer.validated_data.items():
-                setattr(appointment, key, value)
-            appointment.save()
-            return Response({
-                'id': str(appointment.id),
-                **serializer.validated_data
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        """
-        Delete a specific Appointment object by its id.
-        """
-        try:
-            appointment = Appointment.objects.get(id=pk)
-            appointment.delete()
-            return Response({'message': 'Appointment deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        except DoesNotExist:
-            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValidationError:
-            return Response({'error': 'Invalid ID format'}, status=status.HTTP_400_BAD_REQUEST)
+class AppointmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer

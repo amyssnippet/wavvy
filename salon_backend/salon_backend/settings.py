@@ -84,11 +84,16 @@ WSGI_APPLICATION = "salon_backend.wsgi.application"
 # MongoEngine is used instead of Django's default database
 # The following is for MongoDB which is set in the MongoEngine connection above
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",  # This is ignored since MongoDB is used
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'salon_backend',
+        'USER': 'amol6125',
+        'PASSWORD': 'amol6125',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
