@@ -15,7 +15,8 @@ from .views import (
     SendOTPView,
     CheckBusinessView,
     VerifyOTPView,
-    TokenObtainPairView
+    TokenObtainPairView,
+    SetPasswordView
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -52,4 +53,5 @@ urlpatterns = [
     path('check-business/', CheckBusinessView.as_view(), name='check-business'),
     path('send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+    path('set-password/', SetPasswordView.as_view(), name='set_password'),
 ]

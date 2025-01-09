@@ -12,8 +12,7 @@ from .models import (
 )
 from .serializers import (
     BusinessSerializer, ClientSerializer, ServicesSerializer,
-    TeamMemberSerializer, AppointmentSerializer, ServiceCategorySerializer,
-    PhoneVerifySerializer, OTPVerifySerializer
+    TeamMemberSerializer, AppointmentSerializer, ServiceCategorySerializer,SetPasswordSerializer, PhoneVerifySerializer
 )
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -112,6 +111,17 @@ class AppointmentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # ---------------- Authentication Views ---------------- #
 
+class SetPasswordView(APIView):
+    def post(self, request):
+        serializer = SetPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            phone_number = serializer.validated_data['phone_number']
+            password = serializer.validated_data['password']
+            business = Business.objects.get(phone_number=phone_number)
+            business.set_password(password)
+            return Response({"message": "Password set successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class VerifyPhoneNumberView(APIView):
     def post(self, request):
         serializer = PhoneVerifySerializer(data=request.data)
@@ -126,71 +136,57 @@ class VerifyPhoneNumberView(APIView):
 
 
 class SendOTPView(APIView):
-    permission_classes = [AllowAny]  # No authentication required
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = PhoneVerifySerializer(data=request.data)
-        if serializer.is_valid():
-            phone_number = serializer.validated_data['phone_number']
-            otp_entry, created = OTP.objects.get_or_create(phone_number=phone_number)
-            otp_entry.generate_otp()
-            otp_entry.save()
-            print(f"Generated OTP for {phone_number}: {otp_entry.otp}")
-            return Response({"message": "OTP sent successfully.", "otp": otp_entry.otp}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        phone_number = request.data.get('phone_number')
+        if not phone_number:
+            return Response({"message": "Phone number is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.models import User
-from .models import OTP, Business
+        otp_entry, created = OTP.objects.get_or_create(phone_number=phone_number)
+        otp_entry.generate_otp()
+        otp_entry.save()
+        # Integrate an SMS service to send OTP here.
+        print(f"Generated OTP for {phone_number}: {otp_entry.otp}")
+        return Response({"message": "OTP sent successfully."}, status=status.HTTP_200_OK)
 
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
-    
+
     def post(self, request):
         phone_number = request.data.get('phone_number')
         otp = request.data.get('otp')
 
         try:
-            otp_instance = OTP.objects.get(phone_number=phone_number, otp=otp)
+            otp_entry = OTP.objects.get(phone_number=phone_number, otp=otp)
 
-            if otp_instance.is_used:
-                return Response({"message": "OTP already used."}, status=status.HTTP_400_BAD_REQUEST)
+            if not otp_entry.is_verified:
+                otp_entry.is_verified = True
+                otp_entry.save()
 
-            # Mark OTP as used
-            otp_instance.is_used = True
-            otp_instance.save()
-
-            # Check if the user exists; if not, create a new one
-            user, created = User.objects.get_or_create(username=phone_number)
-
-            # Generate tokens for the user
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-
-            # Check if the business exists for the given phone number
+            # Check if the business exists
             business = Business.objects.filter(phone_number=phone_number).first()
 
-            if business:
+            if not business:
                 return Response({
-                    "message": "OTP verified successfully.",
-                    "access": access_token,
-                    "refresh": str(refresh),
-                    "business_exists": True,
-                    "business": business.salon_name
-                })
-            else:
-                return Response({
-                    "message": "OTP verified successfully.",
-                    "access": access_token,
-                    "refresh": str(refresh),
+                    "message": "OTP verified successfully, but no business is associated with this phone number.",
+                    "otp_verified": True,
                     "business_exists": False
-                })
+                }, status=status.HTTP_200_OK)
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(business)
+            return Response({
+                "message": "OTP verified successfully.",
+                "otp_verified": True,
+                "business_exists": True,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh)
+            }, status=status.HTTP_200_OK)
 
         except OTP.DoesNotExist:
             return Response({"message": "Invalid OTP or phone number."}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 from rest_framework.permissions import AllowAny

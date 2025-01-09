@@ -2,7 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import random
-
+from django.contrib.auth.hashers import make_password
 
 # Validation for image size
 def validate_image_size(file):
@@ -10,8 +10,8 @@ def validate_image_size(file):
     if file.size > max_size:
         raise ValidationError("File size exceeds the 2 MB limit.")
 
-
 class Business(models.Model):
+    password = models.CharField(max_length=128, blank=True, null=True)
     phone_number = models.CharField(max_length=15, unique=True)
     owner_name = models.CharField(max_length=100)
     salon_name = models.CharField(max_length=100)
@@ -19,15 +19,18 @@ class Business(models.Model):
     gst = models.CharField(max_length=15, blank=True, null=True)
     salon_description = models.TextField(blank=True)
     profile_img = models.ImageField(upload_to="profiles/", null=True, blank=True)
-    team_members = models.JSONField(default=list)
-    services = models.JSONField(default=list)
-    appointments = models.JSONField(default=list)
-    clients = models.JSONField(default=list)
-    categories = models.JSONField(default=list)
+    team_members = models.ManyToManyField('TeamMember', blank=True, related_name="businesses")
+    services = models.ManyToManyField('Services', blank=True, related_name="businesses")
+    appointments = models.ManyToManyField('Appointment', blank=True, related_name="businesses")
+    clients = models.ManyToManyField('Client', blank=True, related_name="businesses")
+    categories = models.ManyToManyField('ServiceCategory', blank=True, related_name="businesses")
+    
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+        self.save()
 
     def __str__(self):
         return self.salon_name
-
 
 class ServiceCategory(models.Model):
     name = models.CharField(max_length=50)
@@ -35,7 +38,6 @@ class ServiceCategory(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class Services(models.Model):
     service_name = models.CharField(max_length=50)
@@ -50,7 +52,6 @@ class Services(models.Model):
     def __str__(self):
         return self.service_name
 
-
 class Client(models.Model):
     client_name = models.CharField(max_length=255)
     client_type = models.CharField(
@@ -64,11 +65,9 @@ class Client(models.Model):
         max_length=20,
         choices=[("Male", "Male"), ("Female", "Female"), ("Rather Not to Say", "Rather Not to Say")]
     )
-    appointment_history = models.ManyToManyField('Appointment', blank=True)
 
     def __str__(self):
         return self.client_name
-
 
 class TeamMember(models.Model):
     profile_img = models.ImageField(upload_to="team_members", null=True, blank=True)
@@ -86,7 +85,6 @@ class TeamMember(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-
 class Appointment(models.Model):
     services = models.ManyToManyField(Services, related_name="appointments")
     staff = models.ForeignKey(TeamMember, on_delete=models.SET_NULL, null=True, blank=True, related_name="appointments")
@@ -101,7 +99,6 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"Appointment for {self.client_appointments.client_name} on {self.appointment_date}"
-
 
 class OTP(models.Model):
     phone_number = models.CharField(max_length=15, unique=True)
