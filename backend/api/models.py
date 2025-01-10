@@ -1,3 +1,9 @@
+"""
+ya but appointments is way too complicated like i want many details like see each fields for a specific business
+like a business is going to create appointment where he is required to take clients data, team members data, and services data
+"""
+
+
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -19,15 +25,11 @@ class Business(models.Model):
     gst = models.CharField(max_length=15, blank=True, null=True)
     salon_description = models.TextField(blank=True)
     profile_img = models.ImageField(upload_to="profiles/", null=True, blank=True)
-    team_members = models.ManyToManyField('TeamMember', blank=True, related_name="businesses")
+    related_clients = models.ManyToManyField('Client', blank=True, related_name="related_businesses")
+    related_team_members = models.ManyToManyField('TeamMember', blank=True, related_name="related_businesses")
     services = models.ManyToManyField('Services', blank=True, related_name="businesses")
     appointments = models.ManyToManyField('Appointment', blank=True, related_name="businesses")
-    clients = models.ManyToManyField('Client', blank=True, related_name="businesses")
     categories = models.ManyToManyField('ServiceCategory', blank=True, related_name="businesses")
-    
-    def set_password(self, raw_password):
-        self.password = make_password(raw_password)
-        self.save()
 
     def __str__(self):
         return self.salon_name
@@ -53,6 +55,7 @@ class Services(models.Model):
         return self.service_name
 
 class Client(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='clients')
     client_name = models.CharField(max_length=255)
     client_type = models.CharField(
         max_length=50,
@@ -70,6 +73,7 @@ class Client(models.Model):
         return self.client_name
 
 class TeamMember(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_team_members')
     profile_img = models.ImageField(upload_to="team_members", null=True, blank=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -80,7 +84,6 @@ class TeamMember(models.Model):
         max_length=50,
         choices=[("Super Admin", "Super Admin"), ("Admin", "Admin")]
     )
-    is_available = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -101,10 +104,11 @@ class Appointment(models.Model):
         return f"Appointment for {self.client_appointments.client_name} on {self.appointment_date}"
 
 class OTP(models.Model):
-    phone_number = models.CharField(max_length=15, unique=True)
+    phone_number = models.CharField(max_length=15)
     otp = models.CharField(max_length=4)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def generate_otp(self):
         self.otp = str(random.randint(1000, 9999))
+        self.save()

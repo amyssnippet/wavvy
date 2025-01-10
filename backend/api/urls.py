@@ -1,3 +1,4 @@
+# urls.py
 from django.urls import path
 from .views import (
     ServicesListCreateView,
@@ -15,16 +16,10 @@ from .views import (
     SendOTPView,
     CheckBusinessView,
     VerifyOTPView,
-    TokenObtainPairView,
     SetPasswordView
 )
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
-    # JWT Token Routes
-    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    
     # Services
     path('services/', ServicesListCreateView.as_view(), name='services-list-create'),
     path('services/<int:pk>/', ServicesDetailView.as_view(), name='services-detail'),
@@ -35,7 +30,7 @@ urlpatterns = [
 
     # Business
     path('business/', BusinessListCreateView.as_view(), name='business-list-create'),
-    path('business/<int:business_id>/', BusinessDetailView.as_view(), name='business-detail'),  # Updated to use 'business_id'
+    path('business/<int:id>/', BusinessDetailView.as_view(), name='business-detail'),
 
     # Clients
     path('clients/', ClientListCreateView.as_view(), name='client-list-create'),
