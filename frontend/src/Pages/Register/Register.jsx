@@ -11,21 +11,21 @@ export function Register() {
   const [email, setEmail] = useState("");
   const [gst, setGst] = useState("");
   const [description, setDescription] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState(""); // Default state for phone
+  const [phoneNumber, setPhoneNumber] = useState(""); // State for phone number
   const [profileImg, setProfileImg] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
   // Fetch phone number from localStorage
-  const fillphone = localStorage.getItem("phoneNumber");
-
-  // Use effect to set phoneNumber state on component mount
   useEffect(() => {
-    if (fillphone) {
-      setPhoneNumber(fillphone); // If phone is in localStorage, set it as default
+    const storedPhoneNumber = localStorage.getItem("phoneNumberStored");
+    if (storedPhoneNumber) {
+      setPhoneNumber(storedPhoneNumber); // Set phone number state from localStorage
+    } else {
+      setError("No phone number found in localStorage. Please log in again.");
     }
-  }, [fillphone]);
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -59,15 +59,10 @@ export function Register() {
       const responseData = await response.json();
       console.log("Business created:", responseData);
 
-      // Assuming responseData contains tokens and user details
-      const { accessToken, refreshToken, user } = responseData;
-
-      // Store JWT tokens in localStorage
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
-      // Optionally store user data
-      localStorage.setItem("user", JSON.stringify(user));
+      // Store business ID in localStorage
+      if (responseData.id) {
+        localStorage.setItem("businessId", responseData.id);
+      }
 
       setSuccess("Business created successfully!");
       setError("");
@@ -138,8 +133,7 @@ export function Register() {
             placeholder="Phone number"
             className="w-full"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            readOnly
+            readOnly // Makes the field read-only
           />
           <textarea
             placeholder="Enter a description..."

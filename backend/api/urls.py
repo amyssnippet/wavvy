@@ -16,7 +16,9 @@ from .views import (
     SendOTPView,
     CheckBusinessView,
     VerifyOTPView,
-    SetPasswordView
+    SetPasswordView,
+    PackagesListCreateView,
+    PackagesDetailView
 )
 
 urlpatterns = [
@@ -43,6 +45,10 @@ urlpatterns = [
     # Appointments
     path('appointments/', AppointmentListCreateView.as_view(), name='appointment-list-create'),
     path('appointments/<int:pk>/', AppointmentDetailView.as_view(), name='appointment-detail'),
+    
+    # Packages
+    path('packages/', PackagesListCreateView.as_view(), name='packages-list-create'),
+    path('packages/<int:pk>/', PackagesDetailView.as_view(), name='packages-detail'),
 
     # Authentication / OTP Routes
     path('check-business/', CheckBusinessView.as_view(), name='check-business'),

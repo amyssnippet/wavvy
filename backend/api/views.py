@@ -2,8 +2,8 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment
-from .serializers import BusinessSerializer, OTPSerializer, ServiceCategorySerializer, ServicesSerializer, ClientSerializer, TeamMemberSerializer, AppointmentSerializer
+from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment, Packages
+from .serializers import BusinessSerializer, OTPSerializer, ServiceCategorySerializer, ServicesSerializer, ClientSerializer, TeamMemberSerializer, AppointmentSerializer, PackagesSerializer
 import random
 from django.utils import timezone
 from datetime import timedelta
@@ -123,6 +123,12 @@ class ServiceCategoryListCreateView(generics.ListCreateAPIView):
     queryset = ServiceCategory.objects.all()
     serializer_class = ServiceCategorySerializer
     permission_classes = [AllowAny]  # Allow unauthenticated access
+    
+    def get_queryset(self):
+        business_id = self.request.query_params.get('business_id')
+        if business_id:
+            return ServiceCategory.objects.filter(business_id=business_id)
+        return ServiceCategory.objects.all()
 
 class ServiceCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ServiceCategory.objects.all()
@@ -133,10 +139,32 @@ class ServicesListCreateView(generics.ListCreateAPIView):
     queryset = Services.objects.all()
     serializer_class = ServicesSerializer
     permission_classes = [AllowAny]  # Allow unauthenticated access
+    
+    def get_queryset(self):
+        business_id = self.request.query_params.get('business_id')
+        if business_id:
+            return Services.objects.filter(business_id=business_id)
+        return Services.objects.all() 
 
 class ServicesDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Services.objects.all()
     serializer_class = ServicesSerializer
+    permission_classes = [AllowAny]  # Allow unauthenticated access
+    
+class PackagesListCreateView(generics.ListCreateAPIView):
+    queryset = Packages.objects.all()
+    serializer_class = PackagesSerializer
+    permission_classes = [AllowAny]  # Allow unauthenticated access
+    
+    def get_queryset(self):
+        business_id = self.request.query_params.get('business_id')
+        if business_id:
+            return Packages.objects.filter(business_id=business_id)
+        return Packages.objects.all()
+
+class PackagesDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Packages.objects.all()
+    serializer_class = PackagesSerializer
     permission_classes = [AllowAny]  # Allow unauthenticated access
 
 class ClientListCreateView(generics.ListCreateAPIView):
@@ -173,9 +201,23 @@ class TeamMemberDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AllowAny]  # Allow unauthenticated access
 
 class AppointmentListCreateView(generics.ListCreateAPIView):
-    queryset = Appointment.objects.all()
+    permission_classes = [AllowAny]
     serializer_class = AppointmentSerializer
-    permission_classes = [AllowAny]  # Allow unauthenticated access
+
+    def get_queryset(self):
+        business_id = self.request.query_params.get('business_id')
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        queryset = Appointment.objects.all()
+        if business_id:
+            queryset = queryset.filter(business_id=business_id)
+        if start_date and end_date:
+            queryset = queryset.filter(
+                appointment_date__range=[start_date, end_date]
+            )
+        return queryset
+
 
 class AppointmentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Appointment.objects.all()

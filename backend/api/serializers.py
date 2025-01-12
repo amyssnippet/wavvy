@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment
+from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment, Packages
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password
 
@@ -29,14 +29,59 @@ class OTPSerializer(serializers.ModelSerializer):
         fields = ['phone_number', 'otp']
 
 class ServiceCategorySerializer(serializers.ModelSerializer):
+    business_id = serializers.IntegerField(write_only=True)
+    
     class Meta:
         model = ServiceCategory
         fields = '__all__'
+        read_only_fields = ['business']
 
+    def create(self, validated_data):
+        business_id = validated_data.pop('business_id')
+        try:
+            business = Business.objects.get(id=business_id)
+        except Business.DoesNotExist:
+            raise serializers.ValidationError("Business with the given ID does not exist.")
+        
+        category = ServiceCategory.objects.create(business=business, **validated_data)
+        return category
+    
+    
 class ServicesSerializer(serializers.ModelSerializer):
+    business_id = serializers.IntegerField(write_only=True)
+    
     class Meta:
         model = Services
         fields = '__all__'
+        read_only_fields = ['business']
+        
+    def create(self, validated_data):
+        business_id = validated_data.pop('business_id')
+        try:
+            business = Business.objects.get(id=business_id)
+        except Business.DoesNotExist:
+            raise serializers.ValidationError("Business with the given ID does not exist.")
+        
+        service = Services.objects.create(business=business, **validated_data)
+        return service
+    
+class PackagesSerializer(serializers.ModelSerializer):
+    business_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = Packages
+        fields = '__all__'
+        read_only_fields = ['business']
+        
+    def create(self, validated_data):
+        business_id = validated_data.pop('business_id')
+        try:
+            business = Business.objects.get(id=business_id)
+        except Business.DoesNotExist:
+            raise serializers.ValidationError("Business with the given ID does not exist.")
+        
+        package = Packages.objects.create(business=business, **validated_data)
+        return package
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
@@ -56,16 +101,57 @@ class TeamMemberSerializer(serializers.ModelSerializer):
         
         team_member = TeamMember.objects.create(business=business, **validated_data)
         return team_member
+    
 class AppointmentSerializer(serializers.ModelSerializer):
+    services = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Services.objects.all()
+    )
+    business_id = serializers.IntegerField(write_only=True)
+    client_appointments = serializers.PrimaryKeyRelatedField(
+        queryset=Client.objects.all()
+    )
+    staff = serializers.PrimaryKeyRelatedField(
+        queryset=TeamMember.objects.all()
+    )
+
     class Meta:
         model = Appointment
         fields = '__all__'
-        
-        
+        read_only_fields = ['business','client_appointments','staff','services']
+
+    def create(self, validated_data):
+        business_id = validated_data.pop('business_id')
+        services = validated_data.pop('services')
+        try:
+            business = Business.objects.get(id=business_id)
+        except Business.DoesNotExist:
+            raise serializers.ValidationError("Business with the given ID does not exist.")
+
+        appointment = Appointment.objects.create(business=business, **validated_data)
+        appointment.services.set(services)
+        return appointment
+ 
+    def get_client_appointments(self, obj):
+        # Return data for viewing, such as related client information
+        if obj.client_appointments:
+            return {
+                "business_id": obj.client_appointments.business_id,
+                "client_name": obj.client_appointments.client_name,
+                "client_type": obj.client_appointments.client_type,
+                "client_email": obj.client_appointments.client_email,
+                "client_phone": obj.client_appointments.client_phone,
+                "client_dob": obj.client_appointments.client_dob,
+                "client_gender": obj.client_appointments.client_gender,
+            }
+        return None
         
 class BusinessSerializer(serializers.ModelSerializer):
     clients = ClientSerializer(many=True, read_only=True)
     business_team_members = TeamMemberSerializer(many=True, read_only=True)
+    business_services = ServicesSerializer(many=True, read_only=True)
+    business_packages = PackagesSerializer(many=True, read_only=True)
+    business_categories = ServiceCategorySerializer(many=True, read_only=True)
+    business_appointments = AppointmentSerializer(many=True, read_only=True)
     
     class Meta:
         model = Business

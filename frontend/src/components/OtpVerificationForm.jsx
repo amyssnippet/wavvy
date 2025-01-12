@@ -39,33 +39,39 @@ export function OtpVerificationForm({ onBack }) {
     setError("");
 
     const otpCode = otp.join(""); // Combine all digits into a single OTP code
+    const formattedPhoneNumber = phoneNumber.startsWith("IN")
+      ? phoneNumber
+      : `IN${phoneNumber}`; // Ensure phone number includes the "IN" prefix
 
     try {
       // Step 1: Verify OTP
       const otpResponse = await axios.post(
         "http://127.0.0.1:8000/api/verify-otp/",
         {
-          phone_number: phoneNumber,
+          phone_number: formattedPhoneNumber,
           otp: otpCode,
         }
       );
 
-      if (otpResponse.data.message === "OTP verified successfully.") {
+      if (otpResponse.data.message === "OTP verified successfully") {
         console.log("OTP verified!");
 
-        // Store tokens in localStorage
-        localStorage.setItem("accessToken", otpResponse.data.access);
-        localStorage.setItem("refreshToken", otpResponse.data.refresh);
+        // Step 2: Check if business exists
+        const businessResponse = await axios.post(
+          "http://127.0.0.1:8000/api/check-business/",
+          { phone_number: formattedPhoneNumber }
+        );
 
-        // Check if business exists
-        if (otpResponse.data.business_exists) {
-          alert(
-            `Business found: ${otpResponse.data.business}. Redirecting to Dashboard.`
-          );
-          navigate("/dashboard"); // Redirect to dashboard if business exists
+        if (businessResponse.data.exists) {
+          localStorage.setItem(
+            "business_id",
+            businessResponse.data.business_id
+          ); // Save business ID
+          navigate("/dashboard"); // Redirect to dashboard
         } else {
-          alert("No business found. Redirecting to registration.");
-          navigate("/register", { state: { phone_number: phoneNumber } }); // Redirect to register
+          navigate("/register", {
+            state: { phone_number: formattedPhoneNumber },
+          }); // Redirect to registration
         }
       } else {
         setError("Invalid OTP. Please try again.");
@@ -79,8 +85,6 @@ export function OtpVerificationForm({ onBack }) {
       setLoading(false);
     }
   };
-
-
 
   const handleResend = async () => {
     try {
