@@ -127,13 +127,7 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"Appointment for {self.client_appointments.client_name} on {self.appointment_date}"
-    
-    def save(self, *args, **kwargs):
-        if not self.total_price:
-            self.total_price = sum(service.price for service in self.services.all())
-        if not self.duration:
-            self.duration = sum(service.duration_in_mins for service in self.services.all())
-        super().save(*args, **kwargs)
+
 
 
 class OTP(models.Model):

@@ -6,6 +6,7 @@ import { Register } from "./Pages/Register/Register";
 import Dashboard from './Pages/Dashboard/Dashboard';
 import VerifyPage from './Pages/Verify/Verify';
 import SearchPhone from './Pages/Verifying/Verifying';
+import ClientsList from './Pages/Clients/Clients';
 import {
   BrowserRouter as Router,
   Route,
@@ -27,6 +28,7 @@ export default function TeamPage() {
         <Route path='/dashboard' element={<Dashboard/>} />
         <Route path='/verify' element={<VerifyPage/>} />
         <Route path='/verifying' element={<SearchPhone/>} />
+        <Route path='/clients' element={<ClientsList/>} />
       </Routes>
     </Router>
     </div>

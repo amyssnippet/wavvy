@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -27,17 +27,26 @@ import { X } from "lucide-react";
 
 export function InviteDrawer({ open, onOpenChange, addTeamMember }) {
   const form = useForm();
+  const businessId = localStorage.getItem("businessId");
+
+  // Reset the form whenever the drawer is opened
+  useEffect(() => {
+    if (open) {
+      form.reset(); // Clear form fields when the drawer is opened
+    }
+  }, [open, form]);
 
   const onSubmit = async (data) => {
     try {
-        const fullName = `${data.firstName} ${data.lastName}`;
+      const fullName = `${data.firstName} ${data.lastName}`;
 
-        const response = await fetch("http://127.0.0.1:8000/api/team/", {
+      const response = await fetch("http://127.0.0.1:8000/api/team-members/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          business_id: businessId,
           first_name: data.firstName,
           last_name: data.lastName,
           member_name: fullName,

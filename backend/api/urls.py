@@ -18,7 +18,8 @@ from .views import (
     VerifyOTPView,
     SetPasswordView,
     PackagesListCreateView,
-    PackagesDetailView
+    PackagesDetailView,
+    client_metadata_view
 )
 
 urlpatterns = [
@@ -37,6 +38,7 @@ urlpatterns = [
     # Clients
     path('clients/', ClientListCreateView.as_view(), name='client-list-create'),
     path('clients/<int:pk>/', ClientDetailView.as_view(), name='client-detail'),
+    path('client-metadata/', client_metadata_view, name='client-metadata'),
 
     # Team Members
     path('team-members/', TeamMemberListCreateView.as_view(), name='team-member-list-create'),

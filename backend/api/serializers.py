@@ -106,6 +106,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
     services = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Services.objects.all()
     )
+    packages = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Packages.objects.all(), required=False
+    )
     business_id = serializers.IntegerField(write_only=True)
     client_appointments = serializers.PrimaryKeyRelatedField(
         queryset=Client.objects.all()
@@ -117,33 +120,34 @@ class AppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = '__all__'
-        read_only_fields = ['business','client_appointments','staff','services']
+        read_only_fields = ['business', 'client_appointments', 'staff', 'services']
 
     def create(self, validated_data):
         business_id = validated_data.pop('business_id')
-        services = validated_data.pop('services')
+        services = validated_data.pop('services', [])
+        packages = validated_data.pop('packages', [])
+
         try:
             business = Business.objects.get(id=business_id)
         except Business.DoesNotExist:
             raise serializers.ValidationError("Business with the given ID does not exist.")
 
+        # Save the appointment instance first
         appointment = Appointment.objects.create(business=business, **validated_data)
+
+        # Set many-to-many relationships
         appointment.services.set(services)
+        if packages:
+            appointment.packages.set(packages)
+
+        # Calculate the duration (if needed)
+        service_duration = sum(service.duration_in_mins for service in services)
+        package_duration = sum(package.package_duration_in_mins for package in packages)
+        appointment.duration = service_duration + package_duration
+        appointment.save()
+
         return appointment
- 
-    def get_client_appointments(self, obj):
-        # Return data for viewing, such as related client information
-        if obj.client_appointments:
-            return {
-                "business_id": obj.client_appointments.business_id,
-                "client_name": obj.client_appointments.client_name,
-                "client_type": obj.client_appointments.client_type,
-                "client_email": obj.client_appointments.client_email,
-                "client_phone": obj.client_appointments.client_phone,
-                "client_dob": obj.client_appointments.client_dob,
-                "client_gender": obj.client_appointments.client_gender,
-            }
-        return None
+
         
 class BusinessSerializer(serializers.ModelSerializer):
     clients = ClientSerializer(many=True, read_only=True)

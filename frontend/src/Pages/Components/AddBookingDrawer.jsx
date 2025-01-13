@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,51 +16,45 @@ import {
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-const CreateAppointment = ({ open, onClose, onCreate }) => {
+const CreateAppointment = ({ open, onClose, onCreate, businessId }) => {
   const [services, setServices] = useState([]);
   const [staff, setStaff] = useState([]);
   const [clients, setClients] = useState([]);
   const [formData, setFormData] = useState({
-    service: "",
+    services: [],
     staff: "",
-    client: "",
-    date: "",
-    time: "",
+    client_appointments: "",
+    appointment_date: "",
+    appointment_time: "",
+    status: "Scheduled",
+    payment_status: "Pending",
+    pay_mode: "Offline",
+    notes: "",
+    business_id: "", // Empty initially
   });
 
   useEffect(() => {
-    fetchServices();
-    fetchStaff();
-    fetchClients();
-  }, []);
-
-  const fetchServices = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/services/");
-      const data = await response.json();
-      setServices(data);
-    } catch (err) {
-      console.error("Failed to fetch services:", err);
+    if (businessId) {
+      setFormData((prev) => ({
+        ...prev,
+        business_id: businessId, // Update business_id in formData
+      }));
+      fetchBusinessData();
     }
-  };
+  }, [businessId]); // Effect runs whenever businessId changes
 
-  const fetchStaff = async () => {
+  const fetchBusinessData = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/team/");
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/business/${businessId}/`
+      );
       const data = await response.json();
-      setStaff(data);
-    } catch (err) {
-      console.error("Failed to fetch staff:", err);
-    }
-  };
 
-  const fetchClients = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/clients/");
-      const data = await response.json();
-      setClients(data);
+      setServices(data.business_services || []);
+      setStaff(data.business_team_members || []);
+      setClients(data.clients || []);
     } catch (err) {
-      console.error("Failed to fetch clients:", err);
+      console.error("Failed to fetch business data:", err);
     }
   };
 
@@ -83,7 +75,8 @@ const CreateAppointment = ({ open, onClose, onCreate }) => {
         onCreate();
         onClose();
       } else {
-        alert("Failed to create appointment.");
+        const errorData = await response.json();
+        alert("Failed to create appointment: " + JSON.stringify(errorData));
       }
     } catch (err) {
       console.error("Error creating appointment:", err);
@@ -106,7 +99,7 @@ const CreateAppointment = ({ open, onClose, onCreate }) => {
           <div className="space-y-2">
             <label>Service</label>
             <Select
-              onValueChange={(value) => handleInputChange("service", value)}
+              onValueChange={(value) => handleInputChange("services", [value])}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select service" />
@@ -140,7 +133,9 @@ const CreateAppointment = ({ open, onClose, onCreate }) => {
           <div className="space-y-2">
             <label>Client</label>
             <Select
-              onValueChange={(value) => handleInputChange("client", value)}
+              onValueChange={(value) =>
+                handleInputChange("client_appointments", value)
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select client" />
@@ -159,14 +154,18 @@ const CreateAppointment = ({ open, onClose, onCreate }) => {
               <label>Date</label>
               <Input
                 type="date"
-                onChange={(e) => handleInputChange("date", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("appointment_date", e.target.value)
+                }
               />
             </div>
             <div className="space-y-2">
               <label>Time</label>
               <Input
                 type="time"
-                onChange={(e) => handleInputChange("time", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("appointment_time", e.target.value)
+                }
               />
             </div>
           </div>

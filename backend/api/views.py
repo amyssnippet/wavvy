@@ -1,5 +1,5 @@
 # views.py
-from rest_framework import generics, status
+from rest_framework import generics, status, request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment, Packages
@@ -8,6 +8,7 @@ import random
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.permissions import AllowAny
+from django.http import JsonResponse
 
 class SendOTPView(APIView):
     permission_classes = [AllowAny]  # Allow unauthenticated access
@@ -182,6 +183,23 @@ class ClientDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     permission_classes = [AllowAny]  # Allow unauthenticated access
+
+def client_metadata_view(request):
+    metadata = {}
+    for field in Client._meta.get_fields():
+        if hasattr(field, 'choices') and field.choices:
+            metadata[field.name] = {
+                "type": type(field).__name__,
+                "choices": list(field.choices),
+            }
+        else:
+            metadata[field.name] = {
+                "type": type(field).__name__,
+                "nullable": field.null if hasattr(field, 'null') else False,
+            }
+
+    return JsonResponse(metadata)
+
 
 class TeamMemberListCreateView(generics.ListCreateAPIView):
     queryset = TeamMember.objects.all()
