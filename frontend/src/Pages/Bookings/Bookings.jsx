@@ -11,14 +11,17 @@ import {
 } from "@/components/ui/table";
 import { PenIcon, TrashIcon } from "lucide-react";
 import CreateAppointment from "../Components/AddBookingDrawer";
+import { EditBookingDrawer } from "../Components/EditBookingDrawer";
 import { Link } from "react-router-dom";
 
 export function Bookings() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // State for drawer toggle
-  const [businessId, setBusinessId] = useState(null); // State for businessId
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [businessId, setBusinessId] = useState(null);
 
   // Fetch additional data for each appointment
   const fetchDetailedAppointmentData = async (appointments) => {
@@ -193,9 +196,16 @@ export function Bookings() {
                     <TableCell>{appointment.appointment_date}</TableCell>
                     <TableCell>{appointment.appointment_time}</TableCell>
                     <TableCell className="flex space-x-2">
-                      <button className="text-blue-500 hover:underline">
+                      <button
+                        className="text-blue-500 hover:underline"
+                        onClick={() => {
+                          setSelectedAppointmentId(appointment.id);
+                          setIsEditModalOpen(true);
+                        }}
+                      >
                         <PenIcon size={20} />
                       </button>
+
                       <button
                         className="text-red-500 hover:underline"
                         onClick={() => handleDelete(appointment.id)}
@@ -217,6 +227,13 @@ export function Bookings() {
         onClose={() => setIsAddModalOpen(false)} // Close the drawer
         onCreate={fetchBusinessData} // Callback to refresh appointments list
         businessId={businessId} // Pass the business ID here
+      />
+
+      <EditBookingDrawer
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onUpdate={fetchBusinessData}
+        appointmentId={selectedAppointmentId}
       />
     </div>
   );
