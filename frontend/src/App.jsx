@@ -9,6 +9,7 @@ import SearchPhone from './Pages/Verifying/Verifying';
 import ClientsList from './Pages/Clients/Clients';
 import Calendarr from './Pages/Calendar/Calendar';
 import Services from './Pages/Services/Services';
+import ProfilePage from './Pages/Profile/Profile';
 import {
   BrowserRouter as Router,
   Route,
@@ -33,6 +34,7 @@ export default function TeamPage() {
         <Route path='/clients' element={<ClientsList/>} />
         <Route path='/calendar' element={<Calendarr/>} />
         <Route path='/services' element={<Services/>} />
+        <Route path='/profile' element={<ProfilePage/>} />
       </Routes>
     </Router>
     </div>

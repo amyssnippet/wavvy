@@ -3,28 +3,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "../Components/Navbar";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import AddServiceDrawer from "../Components/AddServices";
+import { Link } from "react-router-dom";
+import AddCategoryDrawer from "../Components/AddCategory";
+import AddPackageDrawer from "../Components/AddPackages";
 
 export default function Services() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isPackageDrawerOpen, setIsPackageDrawerOpen] = useState(false);
+  const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState(false);
   const [services, setServices] = useState([]);
   const [packages, setPackages] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(0); // Default to 'All Categories'
-
+  const [selectedCategory, setSelectedCategory] = useState(0);
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
   const businessId = localStorage.getItem("businessId");
+
+  const handleServiceAdded = (newService) => {
+    setServices((prevServices) => [...prevServices, newService]);
+  };
+
+  const handleCategoryAdded = (newCategory) => {
+    setCategories((prevCategories) => [...prevCategories, newCategory]);
+  };
+
+  const handlePackageAdded = (newPackage) => {
+    setPackages((prevPackages) => [...prevPackages, newPackage]);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,7 +99,7 @@ export default function Services() {
             <Button
               variant="secondary"
               className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 px-10 rounded-lg"
-              onClick={toggleDrawer}
+              onClick={() => setIsDrawerOpen(true)}
             >
               Add
             </Button>
@@ -138,6 +146,14 @@ export default function Services() {
                     </Button>
                   </li>
                 ))}
+                <li>
+                  <Link
+                    className="pl-4 underline bg-white text-black pt-auto"
+                    onClick={() => setIsCategoryDrawerOpen(true)}
+                  >
+                    Add Catgories
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -155,6 +171,14 @@ export default function Services() {
                     </Button>
                   </li>
                 ))}
+                <li>
+                  <Link
+                    className="pt-auto pl-4 underline text-black"
+                    onClick={() => setIsPackageDrawerOpen(true)}
+                  >
+                    Add Packages
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -186,28 +210,21 @@ export default function Services() {
         </div>
 
         {/* Drawer for Adding Items */}
-        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <DrawerContent className="flex bg-black justify-center items-center border-none">
-            <div className="max-w-md w-full bg-white rounded-3xl shadow-md p-6 m-10">
-              <DrawerHeader>
-                <DrawerTitle>Add New Item</DrawerTitle>
-                <DrawerDescription>
-                  Use this form to add a new service, package, or category.
-                </DrawerDescription>
-              </DrawerHeader>
-              <DrawerFooter>
-                <Button className="bg-purple-600" onClick={toggleDrawer}>
-                  Submit
-                </Button>
-                <DrawerClose>
-                  <Button variant="outline" onClick={toggleDrawer}>
-                    Cancel
-                  </Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </div>
-          </DrawerContent>
-        </Drawer>
+        <AddServiceDrawer
+          open={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          onServiceAdded={handleServiceAdded}
+        />
+        <AddCategoryDrawer
+          open={isCategoryDrawerOpen}
+          onOpenChange={setIsCategoryDrawerOpen}
+          onCategoryAdded={handleCategoryAdded}
+        />
+        <AddPackageDrawer
+          open={isPackageDrawerOpen}
+          onOpenChange={setIsPackageDrawerOpen}
+          onPackageAdded={handlePackageAdded}
+        />
       </div>
     </div>
   );

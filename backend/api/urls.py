@@ -16,7 +16,6 @@ from .views import (
     SendOTPView,
     CheckBusinessView,
     VerifyOTPView,
-    SetPasswordView,
     PackagesListCreateView,
     PackagesDetailView,
     client_metadata_view
@@ -56,5 +55,4 @@ urlpatterns = [
     path('check-business/', CheckBusinessView.as_view(), name='check-business'),
     path('send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
-    path('set-password/', SetPasswordView.as_view(), name='set_password'),
 ]

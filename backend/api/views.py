@@ -66,33 +66,7 @@ class VerifyOTPView(APIView):
         request.session.save()
         
         return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
-
-class SetPasswordView(APIView):
-    permission_classes = [AllowAny]  # Allow unauthenticated access
-
-    def post(self, request):
-        phone_number = request.session.get('verified_phone_number')
-        password = request.data.get('password')
-        
-        if not phone_number:
-            return Response({'error': 'Phone number not verified'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not password:
-            return Response({'error': 'Password is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            business = Business.objects.get(phone_number=phone_number)
-        except Business.DoesNotExist:
-            return Response({'error': 'Business not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-        business.set_password(password)
-        business.save()
-        
-        # Clear the session after setting the password
-        request.session.flush()
-        
-        return Response({'message': 'Password set successfully'}, status=status.HTTP_200_OK)
-
+    
 class CheckBusinessView(APIView):
     permission_classes = [AllowAny]  # Allow unauthenticated access
 

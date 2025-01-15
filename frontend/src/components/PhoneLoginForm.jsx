@@ -62,8 +62,8 @@ export function PhoneLoginForm() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="IN">IN +91</SelectItem>
-              <SelectItem value="US">US +1</SelectItem>
-              <SelectItem value="UK">UK +44</SelectItem>
+              <SelectItem value="+1">US +1</SelectItem>
+              <SelectItem value="+44">UK +44</SelectItem>
             </SelectContent>
           </Select>
           <Input
