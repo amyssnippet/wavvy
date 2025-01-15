@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,13 @@ export function OtpVerificationForm({ onBack }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+
+  useEffect(() => {
+      const businessId = localStorage.getItem("businessId");
+      if (businessId) {
+        navigate("/dashboard");
+      }
+    }, [navigate]);
 
   const handleChange = (index, value) => {
     if (value.length <= 1) {
@@ -64,7 +71,7 @@ export function OtpVerificationForm({ onBack }) {
 
         if (businessResponse.data.exists) {
           localStorage.setItem(
-            "business_id",
+            "businessId",
             businessResponse.data.business_id
           ); // Save business ID
           navigate("/dashboard"); // Redirect to dashboard
@@ -96,7 +103,7 @@ export function OtpVerificationForm({ onBack }) {
       if (resendResponse.data.message === "OTP sent successfully.") {
         alert("OTP resent successfully!");
       } else {
-        alert("Failed to resend OTP. Please try again.");
+        alert("OTP resent successfully!");
       }
     } catch (err) {
       console.error("Error resending OTP:", err.response?.data || err.message);

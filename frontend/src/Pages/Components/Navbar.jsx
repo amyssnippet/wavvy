@@ -97,7 +97,7 @@ export function Navbar() {
             </DropdownMenuItem>
             <DropdownMenuItem>
               <button
-                onClick={() => console.log("Logout")}
+                onClick={() => localStorage.removeItem("businessId")}
                 className="w-full text-left"
               >
                 Logout

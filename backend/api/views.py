@@ -105,7 +105,7 @@ class CheckBusinessView(APIView):
             business = Business.objects.get(phone_number=phone_number)
             return Response({'exists': True, 'redirect': '/dashboard', 'business_id': business.id}, status=status.HTTP_200_OK)
         except Business.DoesNotExist:
-            return Response({'exists': False}, status=status.HTTP_200_OK)
+            return Response({'exists': False, 'redirect': '/register'}, status=status.HTTP_200_OK)
 
 # CRUD Views for Business
 class BusinessListCreateView(generics.ListCreateAPIView):
@@ -143,9 +143,14 @@ class ServicesListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         business_id = self.request.query_params.get('business_id')
+        category_id = self.request.query_params.get('category_id')  # Filter by category
+        
+        queryset = Services.objects.all()
         if business_id:
-            return Services.objects.filter(business_id=business_id)
-        return Services.objects.all() 
+            queryset = queryset.filter(business_id=business_id)
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)  # Filter services by category
+        return queryset
 
 class ServicesDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Services.objects.all()

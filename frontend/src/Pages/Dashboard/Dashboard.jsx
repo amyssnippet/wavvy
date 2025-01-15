@@ -20,8 +20,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useNavigate } from "react-router-dom";
 
-// Register chart components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -36,7 +36,8 @@ const Dashboard = () => {
   const [businessData, setBusinessData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedDay, setSelectedDay] = useState(4); // Moved this hook to the top
+  const [selectedDay, setSelectedDay] = useState(4);
+  const navigate = useNavigate();
 
   // Fetch business data
   useEffect(() => {
@@ -44,7 +45,7 @@ const Dashboard = () => {
       try {
         const businessId = localStorage.getItem("businessId");
         if (!businessId) {
-          throw new Error("Business ID not found in localStorage");
+          navigate("/login");
         }
 
         const response = await fetch(

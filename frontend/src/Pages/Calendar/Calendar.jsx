@@ -12,11 +12,20 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import GoogleCalendar from "../Components/GoogleCalenderLike";
+import { useNavigate } from "react-router-dom";
 
 export default function Calendarr() {
   const [date, setDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
-  const businessId = localStorage.getItem("businessId"); // Get business ID from localStorage
+  const businessId = localStorage.getItem("businessId");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+      const businessId = localStorage.getItem("businessId");
+      if (!businessId) {
+        navigate("/login");
+      }
+    }, [navigate]);
 
   useEffect(() => {
     async function fetchAppointments() {

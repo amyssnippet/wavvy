@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Link } from "react-router-dom";
 
 export function PhoneLoginForm() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -17,12 +16,18 @@ export function PhoneLoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const businessId = localStorage.getItem("businessId");
+    if (businessId) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     const fullPhoneNumber = `${countryCode}${phoneNumber}`;
-    localStorage.setItem("phoneNumberStored", fullPhoneNumber);
-
+    localStorage.setItem("phoneNumberStored", fullPhoneNumber)
     try {
       const response = await fetch("http://127.0.0.1:8000/api/send-otp/", {
         method: "POST",
@@ -79,26 +84,6 @@ export function PhoneLoginForm() {
       >
         {loading ? "Sending OTP..." : "GET OTP"}
       </Button>
-
-      <div className="space-y-4">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-muted-foreground">
-              Google + Apple + FB
-            </span>
-          </div>
-        </div>
-
-        <p className="text-sm text-center">
-          Already have a account?{" "}
-          <Link to="/login" className="text-purple-600 hover:underline">
-            Login
-          </Link>
-        </p>
-      </div>
     </form>
   );
 }

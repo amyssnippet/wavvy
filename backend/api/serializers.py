@@ -27,14 +27,50 @@ class OTPSerializer(serializers.ModelSerializer):
     class Meta:
         model = OTP
         fields = ['phone_number', 'otp']
-
+    
+    
+class ServicesSerializer(serializers.ModelSerializer):
+    business_id = serializers.IntegerField(write_only=True)
+    category_id = serializers.IntegerField(write_only=True, required=False)
+    
+    class Meta:
+        model = Services
+        fields = '__all__'
+        read_only_fields = ['business']
+        
+    def create(self, validated_data):
+        business_id = validated_data.pop('business_id')
+        category_id = validated_data.pop('category_id', None)
+        try:
+            business = Business.objects.get(id=business_id)
+        except Business.DoesNotExist:
+            raise serializers.ValidationError("Business with the given ID does not exist.")
+        
+        if category_id:
+            try:
+                category = ServiceCategory.objects.get(id=category_id, business=business)
+                validated_data['category'] = category
+            except:
+                raise serializers.ValidationError("Category Does Not Exists.")
+        
+        service = Services.objects.create(business=business, **validated_data)
+        return service
+    
 class ServiceCategorySerializer(serializers.ModelSerializer):
     business_id = serializers.IntegerField(write_only=True)
+    subcategories = serializers.SerializerMethodField()
+    services = ServicesSerializer(many=True, read_only=True)
     
     class Meta:
         model = ServiceCategory
         fields = '__all__'
         read_only_fields = ['business']
+        
+    def get_subcategories(self, obj):
+        # Fetch subcategories for the current category
+        subcategories = obj.subcategories.all()
+        # Serialize the subcategories using the same serializer
+        return ServiceCategorySerializer(subcategories, many=True).data
 
     def create(self, validated_data):
         business_id = validated_data.pop('business_id')
@@ -45,25 +81,6 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
         
         category = ServiceCategory.objects.create(business=business, **validated_data)
         return category
-    
-    
-class ServicesSerializer(serializers.ModelSerializer):
-    business_id = serializers.IntegerField(write_only=True)
-    
-    class Meta:
-        model = Services
-        fields = '__all__'
-        read_only_fields = ['business']
-        
-    def create(self, validated_data):
-        business_id = validated_data.pop('business_id')
-        try:
-            business = Business.objects.get(id=business_id)
-        except Business.DoesNotExist:
-            raise serializers.ValidationError("Business with the given ID does not exist.")
-        
-        service = Services.objects.create(business=business, **validated_data)
-        return service
     
 class PackagesSerializer(serializers.ModelSerializer):
     business_id = serializers.IntegerField(write_only=True)
@@ -162,47 +179,12 @@ class BusinessSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        team_members_data = validated_data.pop('team_members', [])
-        services_data = validated_data.pop('services', [])
-        appointments_data = validated_data.pop('appointments', [])
-        clients_data = validated_data.pop('clients', [])
-        categories_data = validated_data.pop('categories', [])
-
-        # Create the Business object
         business = Business.objects.create(**validated_data)
-
-        # Add many-to-many relationships
-        business.team_members.set(team_members_data)
-        business.services.set(services_data)
-        business.appointments.set(appointments_data)
-        business.clients.set(clients_data)
-        business.categories.set(categories_data)
-
         return business
 
     def update(self, instance, validated_data):
-        # Remove many-to-many fields from validated_data
-        team_members_data = validated_data.pop('team_members', None)
-        services_data = validated_data.pop('services', None)
-        appointments_data = validated_data.pop('appointments', None)
-        clients_data = validated_data.pop('clients', None)
-        categories_data = validated_data.pop('categories', None)
-
-        # Update the Business object
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-
-        # Update many-to-many relationships if provided
-        if team_members_data is not None:
-            instance.team_members.set(team_members_data)
-        if services_data is not None:
-            instance.services.set(services_data)
-        if appointments_data is not None:
-            instance.appointments.set(appointments_data)
-        if clients_data is not None:
-            instance.clients.set(clients_data)
-        if categories_data is not None:
-            instance.categories.set(categories_data)
 
         return instance

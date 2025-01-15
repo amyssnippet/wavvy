@@ -1,9 +1,3 @@
-"""
-ya but appointments is way too complicated like i want many details like see each fields for a specific business
-like a business is going to create appointment where he is required to take clients data, team members data, and services data
-"""
-
-
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -32,6 +26,7 @@ class ServiceCategory(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_categories')
     name = models.CharField(max_length=50)
     description = models.TextField(null=True, blank=True, max_length=255)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories')
 
     def __str__(self):
         return self.name
@@ -43,9 +38,9 @@ class Services(models.Model):
         max_length=50,
         choices=[("Basic", "Basic"), ("Premium", "Premium"), ("Add-on", "Add-on")]
     )
-    category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE, null=True, blank=True, related_name="service")
     duration_in_mins = models.PositiveIntegerField()
     price = models.PositiveIntegerField()
+    category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE, null=True, blank=True, related_name="services")
 
     def __str__(self):
         return self.service_name

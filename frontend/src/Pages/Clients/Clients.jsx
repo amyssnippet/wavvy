@@ -12,16 +12,25 @@ import {
 import { Link } from "react-router-dom";
 import { Calendar, Pen, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import AddClientDrawer from "../Components/AddClients"; // Import the AddClientDrawer component
+import AddClientDrawer from "../Components/AddClients";
+import { useNavigate } from "react-router-dom";
 
 export default function ClientsList() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   const [businessId, setBusinessId] = useState(
     localStorage.getItem("businessId")
   );
 
+  useEffect(() => {
+    const businessId = localStorage.getItem("businessId");
+    if (!businessId) {
+      navigate("/login");
+    }
+  }, [navigate]);
+  
   // Function to toggle drawer visibility
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);

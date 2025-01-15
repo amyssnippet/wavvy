@@ -12,7 +12,7 @@ import {
 import { PenIcon, TrashIcon } from "lucide-react";
 import CreateAppointment from "../Components/AddBookingDrawer";
 import { EditBookingDrawer } from "../Components/EditBookingDrawer";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function Bookings() {
   const [appointments, setAppointments] = useState([]);
@@ -22,6 +22,7 @@ export function Bookings() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [businessId, setBusinessId] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch additional data for each appointment
   const fetchDetailedAppointmentData = async (appointments) => {
@@ -97,12 +98,19 @@ export function Bookings() {
   };
 
   useEffect(() => {
+      const theMainThing = localStorage.getItem("businessId");
+      if (!theMainThing) {
+        navigate("/login");
+      }
+    }, [navigate]);
+
+  useEffect(() => {
     // Fetch businessId from localStorage after the component mounts
     const storedBusinessId = localStorage.getItem("businessId");
     if (storedBusinessId) {
       setBusinessId(storedBusinessId);
     }
-  }, []); // This effect runs once when the component mounts
+  }, []);
 
   useEffect(() => {
     if (businessId) {

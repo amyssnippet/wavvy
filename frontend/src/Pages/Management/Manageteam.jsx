@@ -5,6 +5,7 @@ import { X, PenIcon, TrashIcon } from "lucide-react";
 import { Navbar } from "../Components/Navbar";
 import { InviteDrawer } from "@/Pages/Components/TeamInvite";
 import { EditTeamDrawer } from "@/Pages/Components/TeamEdit";
+import { useNavigate } from "react-router-dom";
 
 export function ManageTeam() {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -12,6 +13,14 @@ export function ManageTeam() {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const businessId = localStorage.getItem("businessId");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const businessId = localStorage.getItem("businessId");
+    if (!businessId) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   // Fetch team members from business ID
   useEffect(() => {

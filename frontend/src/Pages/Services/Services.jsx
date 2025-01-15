@@ -18,17 +18,20 @@ export default function Services() {
   const [services, setServices] = useState([]);
   const [packages, setPackages] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(0); // Default to 'All Categories'
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
+  const businessId = localStorage.getItem("businessId");
+
   useEffect(() => {
-    // Fetch data for services, packages, and categories
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/business/1`); // Replace `1` with dynamic businessId
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/business/${businessId}`
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -47,10 +50,31 @@ export default function Services() {
     fetchData();
   }, []);
 
-  const filteredServices =
-    selectedCategory === "All"
-      ? services
-      : services.filter((service) => service.category === selectedCategory);
+  const handleCategoryClick = async (categoryId) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === 0) {
+      // Show all services
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/business/${businessId}`
+      );
+      const data = await response.json();
+      setServices(data.business_services || []);
+    } else {
+      // Fetch services for a specific category
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/service-categories/${categoryId}/`
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setServices(data.services || []);
+      } catch (error) {
+        console.error("Error fetching services by category:", error);
+      }
+    }
+  };
 
   return (
     <div>
@@ -105,10 +129,10 @@ export default function Services() {
                   <li key={category.id}>
                     <Button
                       variant={
-                        selectedCategory === category.name ? "solid" : "ghost"
+                        selectedCategory === category.id ? "solid" : "ghost"
                       }
                       className="w-full justify-between"
-                      onClick={() => setSelectedCategory(category.name)}
+                      onClick={() => handleCategoryClick(category.id)}
                     >
                       {category.name}
                     </Button>
@@ -138,10 +162,12 @@ export default function Services() {
           {/* Main Content */}
           <div className="w-3/4 p-4">
             <h1 className="text-xl font-bold mb-4">
-              {selectedCategory === "All" ? "All Services" : selectedCategory}
+              {selectedCategory === 0
+                ? "All Services"
+                : categories.find((c) => c.id === selectedCategory)?.name}
             </h1>
             <div className="space-y-4">
-              {filteredServices.map((service) => (
+              {services.map((service) => (
                 <Card
                   key={service.id}
                   className="flex justify-between items-center p-4"
