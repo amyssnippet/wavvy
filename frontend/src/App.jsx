@@ -5,7 +5,6 @@ import { Login } from "./Pages/Login/Login";
 import { Register } from "./Pages/Register/Register";
 import Dashboard from './Pages/Dashboard/Dashboard';
 import VerifyPage from './Pages/Verify/Verify';
-import SearchPhone from './Pages/Verifying/Verifying';
 import ClientsList from './Pages/Clients/Clients';
 import Calendarr from './Pages/Calendar/Calendar';
 import Services from './Pages/Services/Services';
@@ -30,7 +29,6 @@ export default function TeamPage() {
         <Route path='/register' element={<Register />} />
         <Route path='/dashboard' element={<Dashboard/>} />
         <Route path='/verify' element={<VerifyPage/>} />
-        <Route path='/verifying' element={<SearchPhone/>} />
         <Route path='/clients' element={<ClientsList/>} />
         <Route path='/calendar' element={<Calendarr/>} />
         <Route path='/services' element={<Services/>} />

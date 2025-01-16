@@ -31,6 +31,7 @@ import { X, CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { APIURL } from "@/url.config";
 
 export default function AddClientDrawer({ open, onOpenChange }) {
   const [metadata, setMetadata] = useState(null);
@@ -39,7 +40,7 @@ export default function AddClientDrawer({ open, onOpenChange }) {
   useEffect(() => {
     const fetchMetadata = async () => {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/client-metadata/"
+        `${APIURL}/api/client-metadata/`
       );
       if (response.ok) {
         const data = await response.json();
@@ -87,7 +88,7 @@ export default function AddClientDrawer({ open, onOpenChange }) {
     console.log("Payload being sent:", clientData); // Debugging
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/clients/", {
+      const response = await fetch(`${APIURL}/api/clients/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

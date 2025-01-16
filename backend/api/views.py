@@ -4,11 +4,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment, Packages
 from .serializers import BusinessSerializer, OTPSerializer, ServiceCategorySerializer, ServicesSerializer, ClientSerializer, TeamMemberSerializer, AppointmentSerializer, PackagesSerializer
-import random
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
+from phonenumbers import parse, is_valid_number, format_number, PhoneNumberFormat
 
 class SendOTPView(APIView):
     permission_classes = [AllowAny]  # Allow unauthenticated access

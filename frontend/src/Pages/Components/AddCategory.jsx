@@ -15,6 +15,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { APIURL } from "@/url.config";
 
 export default function AddCategoryDrawer({
   open,
@@ -43,7 +44,7 @@ export default function AddCategoryDrawer({
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/categories/", {
+      const response = await fetch(`${APIURL}/api/service-categories/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

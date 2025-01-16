@@ -1,7 +1,9 @@
 import React from "react";
 import { PhoneLoginForm } from "@/components/PhoneLoginForm";
 import { WavveLogo } from "@/components/WavveLogo";
-import { Feature } from "@/components/Feature";
+import one from "@/assets/one.png";
+import two from "@/assets/two.svg";
+import three from "@/assets/three.svg"
 
 export function Login() {
   return (
@@ -11,36 +13,27 @@ export function Login() {
           <WavveLogo />
         </div>
         <div className="space-y-16 p-8">
-          <Feature
-            title={
-              <>
-                <span className="text-purple-600">Easy</span> to Use,{" "}
-                <span className="text-purple-600">Effortless</span> to Navigate.
-              </>
-            }
-            description="Seamless, user-friendly interface for effortless navigation."
-            imageSrc="/placeholder.svg?height=160&width=160"
-          />
-          <Feature
-            title={
-              <>
-                Stay Updated with{" "}
-                <span className="text-purple-600">Timely</span> Alerts.
-              </>
-            }
-            description="Stay on top with smart notifications for appointments and updates."
-            imageSrc="/placeholder.svg?height=160&width=160"
-          />
-          <Feature
-            title={
-              <>
-                <span className="text-purple-600">Streamline</span> Bookings,
-                Track <span className="text-purple-600">Appointments</span>.
-              </>
-            }
-            description="Effortlessly manage and track appointments with our intuitive system."
-            imageSrc="/placeholder.svg?height=160&width=160"
-          />
+          <div className="flex items-center space-x-4">
+            <img
+              src={one}
+              alt="Feature One"
+              className=""
+            />
+          </div>
+          <div className="flex items-center space-x-4">
+            <img
+              src={two}
+              alt="Feature Two"
+              className=""
+            />
+          </div>
+          <div className="flex items-center space-x-4">
+            <img
+              src={three}
+              alt="Feature Three"
+              className=""
+            />
+          </div>
         </div>
       </div>
       <div className="flex items-center justify-center p-8">

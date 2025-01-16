@@ -1,8 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment, Packages
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.hashers import make_password
+from phonenumber_field.serializerfields import PhoneNumberField
 
 class ClientSerializer(serializers.ModelSerializer):
     business_id = serializers.IntegerField(write_only=True)
@@ -24,6 +23,8 @@ class ClientSerializer(serializers.ModelSerializer):
 
 
 class OTPSerializer(serializers.ModelSerializer):
+    phone_number = PhoneNumberField
+    
     class Meta:
         model = OTP
         fields = ['phone_number', 'otp']

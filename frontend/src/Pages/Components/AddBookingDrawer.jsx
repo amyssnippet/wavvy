@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const CreateAppointment = ({ open, onClose, onCreate, businessId }) => {
@@ -28,7 +27,7 @@ const CreateAppointment = ({ open, onClose, onCreate, businessId }) => {
     appointment_time: "",
     status: "Scheduled",
     payment_status: "Pending",
-    pay_mode: "Offline",
+    pay_mode: "Offline", // Default pay_mode
     notes: "",
     business_id: "", // Empty initially
   });
@@ -46,7 +45,7 @@ const CreateAppointment = ({ open, onClose, onCreate, businessId }) => {
   const fetchBusinessData = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/business/${businessId}/`
+        `${APIURL}/api/business/${businessId}/`
       );
       const data = await response.json();
 
@@ -64,7 +63,7 @@ const CreateAppointment = ({ open, onClose, onCreate, businessId }) => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/appointments/", {
+      const response = await fetch(`${APIURL}/api/appointments/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -90,9 +89,6 @@ const CreateAppointment = ({ open, onClose, onCreate, businessId }) => {
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Create Appointment</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X />
-            </Button>
           </div>
         </DialogHeader>
         <div className="space-y-6 py-4">
@@ -168,6 +164,21 @@ const CreateAppointment = ({ open, onClose, onCreate, businessId }) => {
                 }
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <label>Pay Mode</label>
+            <Select
+              value={formData.pay_mode}
+              onValueChange={(value) => handleInputChange("pay_mode", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select pay mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Offline">Offline</SelectItem>
+                <SelectItem value="Online">Online</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="flex justify-end">

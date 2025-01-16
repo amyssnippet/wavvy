@@ -1,19 +1,52 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { APIURL } from "@/url.config";
 
-export function ProfileEdit({ profile, onSave, onCancel }) {
-  const [editedProfile, setEditedProfile] = useState(profile);
-  const [previewImage, setPreviewImage] = useState(profile.profile_img);
+export function ProfileEdit({ onSave, onCancel }) {
+  const [profile, setProfile] = useState(null); // State to hold profile data
+  const [editedProfile, setEditedProfile] = useState(null); // State for editable profile
+  const [previewImage, setPreviewImage] = useState(null);
+  const [isSaving, setIsSaving] = useState(false); // Saving state
+  const businessId = localStorage.getItem("businessId");
+  const url = `${APIURL}/api/business/${businessId}/`; // Replace with your API endpoint
 
+  // Prefetch the profile details
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data);
+          setEditedProfile(data); // Prefill form with fetched data
+          setPreviewImage(data.profile_img); // Set initial preview image
+        } else {
+          console.error("Failed to fetch profile data");
+        }
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      }
+    };
+
+    fetchProfile();
+  }, [url]);
+
+  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditedProfile((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle profile image upload
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -26,10 +59,35 @@ export function ProfileEdit({ profile, onSave, onCancel }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(editedProfile);
+    setIsSaving(true);
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(editedProfile),
+      });
+
+      if (response.ok) {
+        const updatedProfile = await response.json();
+        onSave(updatedProfile); // Pass updated data back to parent
+      } else {
+        console.error("Failed to update profile:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (!profile) {
+    return <div>Loading...</div>; // Loading state while fetching profile
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -102,10 +160,17 @@ export function ProfileEdit({ profile, onSave, onCancel }) {
         />
       </div>
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSaving}
+        >
           Cancel
         </Button>
-        <Button type="submit">Save Changes</Button>
+        <Button type="submit" disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
     </form>
   );

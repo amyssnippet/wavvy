@@ -6,6 +6,7 @@ import { Navbar } from "../Components/Navbar";
 import { InviteDrawer } from "@/Pages/Components/TeamInvite";
 import { EditTeamDrawer } from "@/Pages/Components/TeamEdit";
 import { useNavigate } from "react-router-dom";
+import { APIURL } from "@/url.config";
 
 export function ManageTeam() {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -32,7 +33,7 @@ export function ManageTeam() {
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/business/${businessId}/`
+          `${APIURL}/api/business/${businessId}/`
         );
         if (response.ok) {
           const data = await response.json();
@@ -50,7 +51,7 @@ export function ManageTeam() {
   // Add a new team member
   const addTeamMember = async (newMember) => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/team-members/", {
+      const response = await fetch(`${APIURL}/api/team-members/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +75,7 @@ export function ManageTeam() {
   const editTeamMember = async (updatedMember) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/team-members/${updatedMember.id}/`,
+        `${APIURL}/api/team-members/${updatedMember.id}/`,
         {
           method: "PUT",
           headers: {
@@ -107,7 +108,7 @@ export function ManageTeam() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/team-members/${id}/`,
+        `${APIURL}/api/team-members/${id}/`,
         {
           method: "DELETE",
         }

@@ -2,7 +2,9 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import random
-from django.contrib.auth.hashers import make_password
+from phonenumber_field.modelfields import PhoneNumberField
+from datetime import timedelta
+from django.utils.timezone import now
 
 # Validation for image size
 def validate_image_size(file):
@@ -126,7 +128,7 @@ class Appointment(models.Model):
 
 
 class OTP(models.Model):
-    phone_number = models.CharField(max_length=15)
+    phone_number = PhoneNumberField(unique=False)
     otp = models.CharField(max_length=4)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -134,3 +136,7 @@ class OTP(models.Model):
     def generate_otp(self):
         self.otp = str(random.randint(1000, 9999))
         self.save()
+        
+    def is_expired(self):
+        """Check if OTP is expired."""
+        return self.created_at < now() - timedelta(minutes=5)

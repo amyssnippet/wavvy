@@ -13,22 +13,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-export const EditBookingDrawer = ({ open, onClose, onUpdate, appointmentId }) => {
+export const EditBookingDrawer = ({
+  open,
+  onClose,
+  onUpdate,
+  appointmentId,
+}) => {
   const [services, setServices] = useState([]);
   const [staff, setStaff] = useState([]);
   const [clients, setClients] = useState([]);
+  const businessId = localStorage.getItem("businessId");
+
   const [formData, setFormData] = useState({
     services: [],
+    business_id: businessId, // Initialize with businessId from localStorage
     staff: "",
     client_appointments: "",
     appointment_date: "",
     appointment_time: "",
     status: "Scheduled",
     payment_status: "Pending",
-    pay_mode: "Offline",
+    pay_mode: "Offline", // Default value for pay_mode
     notes: "",
   });
 
@@ -41,15 +48,20 @@ export const EditBookingDrawer = ({ open, onClose, onUpdate, appointmentId }) =>
   const fetchAppointmentDetails = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/appointments/${appointmentId}/`
+        `${APIURL}/api/appointments/${appointmentId}/`
       );
       const data = await response.json();
-      setFormData(data);
+
+      // Set formData with the fetched data and include the business_id
+      setFormData((prev) => ({
+        ...prev,
+        ...data,
+        business_id: businessId, // Ensure business_id is included
+      }));
 
       // Fetch related data for dropdowns
-      const businessId = localStorage.getItem("businessId");
       const businessResponse = await fetch(
-        `http://127.0.0.1:8000/api/business/${businessId}/`
+        `${APIURL}/api/business/${businessId}/`
       );
       const businessData = await businessResponse.json();
       setServices(businessData.business_services || []);
@@ -67,7 +79,7 @@ export const EditBookingDrawer = ({ open, onClose, onUpdate, appointmentId }) =>
   const handleSubmit = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/appointments/${appointmentId}/`,
+        `${APIURL}/api/appointments/${appointmentId}/`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -95,9 +107,6 @@ export const EditBookingDrawer = ({ open, onClose, onUpdate, appointmentId }) =>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Edit Appointment</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X />
-            </Button>
           </div>
         </DialogHeader>
         <div className="space-y-6 py-4">
@@ -178,6 +187,21 @@ export const EditBookingDrawer = ({ open, onClose, onUpdate, appointmentId }) =>
                 }
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <label>Pay Mode</label>
+            <Select
+              value={formData.pay_mode}
+              onValueChange={(value) => handleInputChange("pay_mode", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select pay mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Offline">Offline</SelectItem>
+                <SelectItem value="Online">Online</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="flex justify-end">

@@ -7,6 +7,7 @@ import AddServiceDrawer from "../Components/AddServices";
 import { Link } from "react-router-dom";
 import AddCategoryDrawer from "../Components/AddCategory";
 import AddPackageDrawer from "../Components/AddPackages";
+import { APIURL } from "@/url.config";
 
 export default function Services() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -38,7 +39,7 @@ export default function Services() {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/business/${businessId}`
+          `${APIURL}/api/business/${businessId}`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -47,7 +48,7 @@ export default function Services() {
         setServices(data.business_services || []);
         setPackages(data.business_packages || []);
         setCategories([
-          { id: 0, name: "All Categories" },
+          { id: 0, name: "All Services" },
           ...data.business_categories,
         ]);
       } catch (error) {
@@ -63,7 +64,7 @@ export default function Services() {
     if (categoryId === 0) {
       // Show all services
       const response = await fetch(
-        `http://127.0.0.1:8000/api/business/${businessId}`
+        `${APIURL}/api/business/${businessId}`
       );
       const data = await response.json();
       setServices(data.business_services || []);
@@ -71,7 +72,7 @@ export default function Services() {
       // Fetch services for a specific category
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/service-categories/${categoryId}/`
+          `${APIURL}/api/service-categories/${categoryId}/`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

@@ -21,6 +21,7 @@ import {
   Legend,
 } from "chart.js";
 import { useNavigate } from "react-router-dom";
+import { APIURL } from "@/url.config";
 
 ChartJS.register(
   CategoryScale,
@@ -49,7 +50,7 @@ const Dashboard = () => {
         }
 
         const response = await fetch(
-          `http://127.0.0.1:8000/api/business/${businessId}/?format=json`
+          `${APIURL}/api/business/${businessId}/?format=json`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch business data");

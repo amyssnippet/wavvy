@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { APIURL } from "@/url.config";
 
 export function PhoneLoginForm() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -29,7 +30,7 @@ export function PhoneLoginForm() {
     const fullPhoneNumber = `${countryCode}${phoneNumber}`;
     localStorage.setItem("phoneNumberStored", fullPhoneNumber)
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/send-otp/", {
+      const response = await fetch(`${APIURL}/api/send-otp/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone_number: fullPhoneNumber }),
@@ -61,7 +62,7 @@ export function PhoneLoginForm() {
               <SelectValue placeholder="Country" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="IN">IN +91</SelectItem>
+              <SelectItem value="+91">IN +91</SelectItem>
               <SelectItem value="+1">US +1</SelectItem>
               <SelectItem value="+44">UK +44</SelectItem>
             </SelectContent>

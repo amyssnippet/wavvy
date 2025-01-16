@@ -1,8 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { NavLink } from "react-router-dom"; // Use NavLink instead of Link
+import { useState, useEffect } from "react";
+import { useNavigate, NavLink } from "react-router-dom"; // Use NavLink instead of Link
 import {
   House,
-  ChartColumn,
   CalendarClock,
   BookOpen,
   UsersRound,
@@ -17,8 +16,71 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import avatar1 from "../../assets/Avatar-1.png";
+import { Button } from "@/components/ui/button";
+import { APIURL } from "@/url.config";
 
 export function Navbar() {
+  const businessId = localStorage.getItem("businessId");
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("businessId")
+  );
+  const navigate = useNavigate();
+  const [businessData, setBusinessData] = useState({
+    businessName: "",
+    ownerName: "",
+  });
+  const url = `${APIURL}/api/business/${businessId}/`;
+
+  useEffect(() => {
+    const fetchBusinessInfo = async () => {
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setBusinessData({
+            businessName: data.salon_name, // Mapping salon_name to businessName
+            ownerName: data.owner_name, // Mapping owner_name to ownerName
+          });
+        } else {
+          console.error("Failed to fetch business info");
+        }
+      } catch (error) {
+        console.error("Error fetching business info:", error);
+      }
+    };
+
+    fetchBusinessInfo();
+  }, [url]);
+
+  // Monitor changes in login state
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem("businessId"));
+    };
+
+    // Listen for changes to localStorage
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("businessId");
+    setIsLoggedIn(false); // Update state
+    navigate("/login"); // Redirect to login page
+  };
+
+  if (!isLoggedIn) {
+    return null; // Do not render the Navbar if the user is logged out
+  }
+
   return (
     <nav className="flex items-center justify-between bg-white shadow-md p-4">
       {/* Logo at the start */}
@@ -83,9 +145,9 @@ export function Navbar() {
           <DropdownMenuTrigger asChild>
             <div className="flex items-center cursor-pointer space-x-2">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={avatar1} alt="User Avatar" />
+                <AvatarFallback>{businessData.ownerName.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium">Akash Verma</span>
+              <span className="text-sm font-medium">{businessData.ownerName}</span>
               <ChevronDown className="w-4 h-4 text-gray-500" />
             </div>
           </DropdownMenuTrigger>
@@ -96,10 +158,7 @@ export function Navbar() {
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <button
-                onClick={() => localStorage.removeItem("businessId")}
-                className="w-full text-left"
-              >
+              <button onClick={handleLogout} className="w-full text-left">
                 Logout
               </button>
             </DropdownMenuItem>

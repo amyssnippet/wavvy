@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
+import { APIURL } from "@/url.config";
 
 export default function AddServiceDrawer({
   open,
@@ -35,7 +36,7 @@ export default function AddServiceDrawer({
       serviceType: "",
       durationInMins: "",
       price: "",
-      categoryId: null,
+      categoryId: "",
     },
   });
 
@@ -46,7 +47,7 @@ export default function AddServiceDrawer({
     const fetchCategories = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/business/${businessId}`
+          `${APIURL}/api/business/${businessId}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -75,7 +76,7 @@ export default function AddServiceDrawer({
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/services/", {
+      const response = await fetch(`${APIURL}/api/services/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

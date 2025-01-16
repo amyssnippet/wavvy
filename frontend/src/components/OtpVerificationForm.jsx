@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+import { APIURL } from "@/url.config";
 
 export function OtpVerificationForm({ onBack }) {
   const location = useLocation();
@@ -14,11 +15,11 @@ export function OtpVerificationForm({ onBack }) {
   const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
   useEffect(() => {
-      const businessId = localStorage.getItem("businessId");
-      if (businessId) {
-        navigate("/dashboard");
-      }
-    }, [navigate]);
+    const businessId = localStorage.getItem("businessId");
+    if (businessId) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const handleChange = (index, value) => {
     if (value.length <= 1) {
@@ -52,28 +53,22 @@ export function OtpVerificationForm({ onBack }) {
 
     try {
       // Step 1: Verify OTP
-      const otpResponse = await axios.post(
-        "http://127.0.0.1:8000/api/verify-otp/",
-        {
-          phone_number: formattedPhoneNumber,
-          otp: otpCode,
-        }
-      );
+      const otpResponse = await axios.post(`${APIURL}/api/verify-otp/`, {
+        phone_number: formattedPhoneNumber,
+        otp: otpCode,
+      });
 
       if (otpResponse.data.message === "OTP verified successfully") {
         console.log("OTP verified!");
 
         // Step 2: Check if business exists
         const businessResponse = await axios.post(
-          "http://127.0.0.1:8000/api/check-business/",
+          `${APIURL}/api/check-business/`,
           { phone_number: formattedPhoneNumber }
         );
 
         if (businessResponse.data.exists) {
-          localStorage.setItem(
-            "businessId",
-            businessResponse.data.business_id
-          ); // Save business ID
+          localStorage.setItem("businessId", businessResponse.data.business_id); // Save business ID
           navigate("/dashboard"); // Redirect to dashboard
         } else {
           navigate("/register", {
@@ -96,10 +91,9 @@ export function OtpVerificationForm({ onBack }) {
   const handleResend = async () => {
     try {
       setLoading(true);
-      const resendResponse = await axios.post(
-        "http://127.0.0.1:8000/api/send-otp/",
-        { phone_number: phoneNumber }
-      );
+      const resendResponse = await axios.post(`${APIURL}/api/send-otp/`, {
+        phone_number: phoneNumber,
+      });
       if (resendResponse.data.message === "OTP sent successfully.") {
         alert("OTP resent successfully!");
       } else {

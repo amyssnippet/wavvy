@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { APIURL } from "@/url.config";
 
 export function EditTeamDrawer({
   open,
@@ -55,7 +56,7 @@ export function EditTeamDrawer({
 
     if (Object.keys(updatedFields).length > 0) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/team-members/${teamMember.id}/`, {
+        const response = await fetch(`${APIURL}/api/team-members/${teamMember.id}/`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",

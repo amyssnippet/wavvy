@@ -13,6 +13,7 @@ import { PenIcon, TrashIcon } from "lucide-react";
 import CreateAppointment from "../Components/AddBookingDrawer";
 import { EditBookingDrawer } from "../Components/EditBookingDrawer";
 import { Link, useNavigate } from "react-router-dom";
+import { APIURL } from "@/url.config";
 
 export function Bookings() {
   const [appointments, setAppointments] = useState([]);
@@ -32,24 +33,21 @@ export function Bookings() {
           const [clientResponse, staffResponse, servicesResponses] =
             await Promise.all([
               fetch(
-                `http://127.0.0.1:8000/api/clients/${appointment.client_appointments}/`
+                `${APIURL}/api/clients/${appointment.client_appointments}/`
               ).then((res) =>
                 res.ok
                   ? res.json()
                   : Promise.reject("Failed to fetch client data")
               ),
-              fetch(
-                `http://127.0.0.1:8000/api/team-members/${appointment.staff}/`
-              ).then((res) =>
-                res.ok
-                  ? res.json()
-                  : Promise.reject("Failed to fetch staff data")
+              fetch(`${APIURL}/api/team-members/${appointment.staff}/`).then(
+                (res) =>
+                  res.ok
+                    ? res.json()
+                    : Promise.reject("Failed to fetch staff data")
               ),
               Promise.all(
                 appointment.services.map((serviceId) =>
-                  fetch(
-                    `http://127.0.0.1:8000/api/services/${serviceId}/`
-                  ).then((res) =>
+                  fetch(`${APIURL}/api/services/${serviceId}/`).then((res) =>
                     res.ok
                       ? res.json()
                       : Promise.reject(`Failed to fetch service ${serviceId}`)
@@ -81,9 +79,7 @@ export function Bookings() {
       if (!businessId) {
         throw new Error("Business ID is missing");
       }
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/business/${businessId}/`
-      );
+      const response = await fetch(`${APIURL}/api/business/${businessId}/`);
       if (!response.ok) throw new Error("Failed to fetch business data");
       const data = await response.json();
       const detailedAppointments = await fetchDetailedAppointmentData(
@@ -123,12 +119,9 @@ export function Bookings() {
       return;
 
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/appointments/${id}/`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${APIURL}/api/appointments/${id}/`, {
+        method: "DELETE",
+      });
       if (!response.ok) throw new Error("Failed to delete appointment");
       fetchBusinessData();
     } catch (err) {

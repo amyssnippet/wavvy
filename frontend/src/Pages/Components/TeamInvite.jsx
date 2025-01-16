@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
+import { APIURL } from "@/url.config";
 
 export function InviteDrawer({ open, onOpenChange, addTeamMember }) {
   const form = useForm();
@@ -40,7 +41,7 @@ export function InviteDrawer({ open, onOpenChange, addTeamMember }) {
     try {
       const fullName = `${data.firstName} ${data.lastName}`;
 
-      const response = await fetch("http://127.0.0.1:8000/api/team-members/", {
+      const response = await fetch(`${APIURL}/api/team-members/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

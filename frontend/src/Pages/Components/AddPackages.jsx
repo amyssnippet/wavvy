@@ -15,6 +15,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { APIURL } from "@/url.config";
 
 export default function AddPackageDrawer({
   open,
@@ -45,7 +46,7 @@ export default function AddPackageDrawer({
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/packages/", {
+      const response = await fetch(`${APIURL}/api/packages/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

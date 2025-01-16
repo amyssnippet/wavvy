@@ -13,9 +13,13 @@ import { Link } from "react-router-dom";
 import { Calendar, Pen, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import AddClientDrawer from "../Components/AddClients";
+import EditClientDrawer from "../Components/EditClientDrawer";
 import { useNavigate } from "react-router-dom";
+import { APIURL } from "@/url.config";
 
 export default function ClientsList() {
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +27,37 @@ export default function ClientsList() {
   const [businessId, setBusinessId] = useState(
     localStorage.getItem("businessId")
   );
+
+  const deleteClient = async (clientId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this client?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(
+        `${APIURL}/api/clients/${clientId}/`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        // Remove the deleted client from the local state
+        setClients((prevClients) =>
+          prevClients.filter((client) => client.id !== clientId)
+        );
+        alert("Client deleted successfully!");
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to delete client:", errorData);
+        alert("Failed to delete client. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
 
   useEffect(() => {
     const businessId = localStorage.getItem("businessId");
@@ -41,7 +76,7 @@ export default function ClientsList() {
     const fetchClients = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/business/${businessId}/`
+          `${APIURL}/api/business/${businessId}/`
         );
         const data = await response.json();
         setClients(data.clients);
@@ -125,13 +160,19 @@ export default function ClientsList() {
                     <TableCell>{client.client_email}</TableCell>
                     <TableCell>{client.client_type}</TableCell>
                     <TableCell className="flex space-x-2">
-                      <button className="text-black">
+                      <button
+                        className="text-black"
+                        onClick={() => {
+                          setSelectedClient(client); // Set the selected client
+                          setIsEditDrawerOpen(true); // Open the drawer
+                        }}
+                      >
                         <Pen className="w-4 h-4" />
                       </button>
-                      <button className="text-black">
-                        <Calendar className="w-4 h-4" />
-                      </button>
-                      <button className="text-black">
+                      <button
+                        className="text-black"
+                        onClick={() => deleteClient(client.id)}
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </TableCell>
@@ -145,6 +186,11 @@ export default function ClientsList() {
 
       {/* Add Client Drawer */}
       <AddClientDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} />
+      <EditClientDrawer
+        open={isEditDrawerOpen} // Controls whether the drawer is open
+        onOpenChange={setIsEditDrawerOpen} // Function to close the drawer
+        client={selectedClient} // Pass the selected client for editing
+      />
     </div>
   );
 }

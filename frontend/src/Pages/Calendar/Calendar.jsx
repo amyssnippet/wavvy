@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import GoogleCalendar from "../Components/GoogleCalenderLike";
 import { useNavigate } from "react-router-dom";
+import { APIURL } from "@/url.config";
 
 export default function Calendarr() {
   const [date, setDate] = useState(new Date());
@@ -30,7 +31,7 @@ export default function Calendarr() {
   useEffect(() => {
     async function fetchAppointments() {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/business/${businessId}`); // Adjust the endpoint as per your backend
+        const response = await fetch(`${APIURL}/api/business/${businessId}`); // Adjust the endpoint as per your backend
         const data = await response.json();
 
         // Extract and format appointments

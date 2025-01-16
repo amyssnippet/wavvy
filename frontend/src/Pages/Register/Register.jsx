@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logo from "../../assets/logo.svg";
 import r from "../../assets/regsiter.svg";
+import { APIURL } from "@/url.config";
 
 export function Register() {
   const [ownerName, setOwnerName] = useState("");
@@ -42,7 +43,7 @@ export function Register() {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/business/", {
+      const response = await fetch(`${APIURL}/api/business/`, {
         method: "POST",
         body: formData,
       });

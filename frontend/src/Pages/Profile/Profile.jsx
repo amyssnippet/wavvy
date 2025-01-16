@@ -31,7 +31,7 @@ export default function ProfilePage() {
     <>
     <Navbar /> 
 
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto mt-20">
       <CardHeader>
         <CardTitle>Profile</CardTitle>
       </CardHeader>
