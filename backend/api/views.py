@@ -9,9 +9,25 @@ from datetime import timedelta
 from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
 from phonenumbers import parse, is_valid_number, format_number, PhoneNumberFormat
+from twilio.rest import Client as cl
+import os
+
+
+def send_otp_twilio(otp, number ):
+    account_sid = os.environ["TWILIO_ACCOUNT_SID"]
+    auth_token = os.environ["TWILIO_AUTH_TOKEN"]
+    client = cl(account_sid, auth_token)
+
+    message = client.messages.create(
+        body= f"Your otp for wavvy login ins {otp}",
+        from_="++12312725786",
+        to= f"{number}",
+    )
+
+    print(message.body)
 
 class SendOTPView(APIView):
-    permission_classes = [AllowAny]  # Allow unauthenticated access
+    permission_classes = [AllowAny]  
 
     def post(self, request):
         phone_number = request.data.get('phone_number')
@@ -22,12 +38,12 @@ class SendOTPView(APIView):
         otp = OTP(phone_number=phone_number)
         otp.generate_otp()
         otp.save()
-        
-        # Here you would send the OTP to the user's phone number
-        # For now, we'll just print it to the console
+
         print(f"OTP for {phone_number} is {otp.otp}")
-        
+        send_otp_twilio(otp.otp, phone_number)
         return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+
+
 
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]  # Allow unauthenticated access
@@ -150,7 +166,7 @@ class PackagesDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ClientListCreateView(generics.ListCreateAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
-    permission_classes = [AllowAny]  # Allow unauthenticated access
+    permission_classes = [AllowAny]  
     
     def get_queryset(self):
         business_id = self.request.query_params.get('business_id')

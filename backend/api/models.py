@@ -140,3 +140,4 @@ class OTP(models.Model):
     def is_expired(self):
         """Check if OTP is expired."""
         return self.created_at < now() - timedelta(minutes=5)
+    
