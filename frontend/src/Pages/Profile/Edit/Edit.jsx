@@ -10,6 +10,7 @@ export function ProfileEdit({ onSave, onCancel }) {
   const [profile, setProfile] = useState(null); // State to hold profile data
   const [editedProfile, setEditedProfile] = useState(null); // State for editable profile
   const [previewImage, setPreviewImage] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState(null); // File for the new image
   const [isSaving, setIsSaving] = useState(false); // Saving state
   const businessId = localStorage.getItem("businessId");
   const url = `${APIURL}/api/business/${businessId}/`; // Replace with your API endpoint
@@ -50,10 +51,10 @@ export function ProfileEdit({ onSave, onCancel }) {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setSelectedImageFile(file); // Store the file to send in the request
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewImage(reader.result);
-        setEditedProfile((prev) => ({ ...prev, profile_img: reader.result }));
+        setPreviewImage(reader.result); // Update the preview
       };
       reader.readAsDataURL(file);
     }
@@ -63,20 +64,35 @@ export function ProfileEdit({ onSave, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
+
     try {
+      // Use FormData to handle multipart form-data
+      const formData = new FormData();
+      formData.append("owner_name", editedProfile.owner_name);
+      formData.append("salon_name", editedProfile.salon_name);
+      formData.append("phone_number", editedProfile.phone_number);
+      formData.append("owner_email", editedProfile.owner_email);
+      formData.append("gst", editedProfile.gst);
+      formData.append("salon_description", editedProfile.salon_description);
+
+      // Append the profile image if a new one is selected
+      if (selectedImageFile) {
+        formData.append("profile_img", selectedImageFile);
+      }
+
       const response = await fetch(url, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`, // Add token if needed
         },
-        body: JSON.stringify(editedProfile),
+        body: formData, // Send FormData as the body
       });
 
       if (response.ok) {
         const updatedProfile = await response.json();
         onSave(updatedProfile); // Pass updated data back to parent
       } else {
-        console.error("Failed to update profile:", response.statusText);
+        console.error("Failed to update profile:", await response.text());
       }
     } catch (error) {
       console.error("Error updating profile:", error);
