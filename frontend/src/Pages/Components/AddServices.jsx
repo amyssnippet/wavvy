@@ -46,9 +46,7 @@ export default function AddServiceDrawer({
     // Fetch categories for dropdown
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          `${APIURL}/api/business/${businessId}`
-        );
+        const response = await fetch(`${APIURL}/api/business/${businessId}`);
         if (response.ok) {
           const data = await response.json();
           setCategories(data.business_categories || []);
@@ -127,10 +125,7 @@ export default function AddServiceDrawer({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Service Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select service type" />
@@ -188,18 +183,19 @@ export default function AddServiceDrawer({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="text-black">
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
+                        <SelectItem
+                          className="text-black"
+                          key={category.id}
+                          value={category.id}
+                        >
                           {category.name}
                         </SelectItem>
                       ))}

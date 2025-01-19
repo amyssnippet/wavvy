@@ -18,15 +18,17 @@ import { APIURL } from "@/url.config";
 export default function Calendarr() {
   const [date, setDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
+  const [appointmentsForSelectedDate, setAppointmentsForSelectedDate] =
+    useState([]);
   const businessId = localStorage.getItem("businessId");
   const navigate = useNavigate();
 
   useEffect(() => {
-      const businessId = localStorage.getItem("businessId");
-      if (!businessId) {
-        navigate("/login");
-      }
-    }, [navigate]);
+    const businessId = localStorage.getItem("businessId");
+    if (!businessId) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   useEffect(() => {
     async function fetchAppointments() {
@@ -67,6 +69,15 @@ export default function Calendarr() {
     fetchAppointments();
   }, [businessId]);
 
+  // Filter appointments for the selected date
+  useEffect(() => {
+    const selectedDate = date.toISOString().split("T")[0];
+    const filteredAppointments = appointments.filter(
+      (appointment) => appointment.appointmentDate === selectedDate
+    );
+    setAppointmentsForSelectedDate(filteredAppointments);
+  }, [date, appointments]);
+
   return (
     <div>
       <Navbar />
@@ -77,34 +88,6 @@ export default function Calendarr() {
             <span className="text-gray-500 font-thin text-xl">
               View all the activity
             </span>
-          </div>
-        </div>
-
-        <div className="flex flex-row space-x-4 outline outline-1 outline-gray-200 rounded-md px-2">
-          <div className="bg-white rounded-md w-full flex items-center space-x-4 p-2">
-            <Input
-              type="text"
-              placeholder="Search"
-              className="flex-grow p-1 rounded-md"
-            />
-            <Input
-              type="date"
-              placeholder="Month to date"
-              className="flex-grow p-1 rounded-md"
-            />
-            <Input
-              type="text"
-              placeholder="Filters"
-              className="flex-grow p-1 rounded-md"
-            />
-          </div>
-          <div className="flex items-center">
-            <Button
-              variant="outline"
-              className="bg-purple-600 text-white hover:bg-purple-700 px-4 px-10 rounded-lg"
-            >
-              Add
-            </Button>
           </div>
         </div>
 
@@ -124,46 +107,67 @@ export default function Calendarr() {
               selected={date}
               onSelect={setDate}
               className="rounded-md border bg-white outline outline-1 outline-gray-200"
+              renderDay={(day, modifiers) => {
+                const dayString = day.toISOString().split("T")[0];
+                const hasAppointment = appointments.some(
+                  (appointment) => appointment.appointmentDate === dayString
+                );
+
+                return (
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                      hasAppointment ? "bg-purple-200" : ""
+                    }`}
+                  >
+                    {day.getDate()}
+                  </div>
+                );
+              }}
             />
             <Card className="outline outline-1 outline-gray-200">
               <CardHeader>
-                <CardTitle>Upcoming Appointments</CardTitle>
+                <CardTitle>Appointments for {date.toDateString()}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {appointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="flex justify-between items-center"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <Avatar>
-                          <AvatarImage
-                            src="https://via.placeholder.com/50"
-                            alt={appointment.clientName}
-                          />
-                          <AvatarFallback>
-                            {appointment.clientName[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold">
-                            {appointment.clientName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {appointment.serviceName}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            Staff: {appointment.staffName}
-                          </p>
+                  {appointmentsForSelectedDate.length > 0 ? (
+                    appointmentsForSelectedDate.map((appointment) => (
+                      <div
+                        key={appointment.id}
+                        className="flex justify-between items-center"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <Avatar>
+                            <AvatarImage
+                              src="https://via.placeholder.com/50"
+                              alt={appointment.clientName}
+                            />
+                            <AvatarFallback>
+                              {appointment.clientName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold">
+                              {appointment.clientName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {appointment.serviceName}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              Staff: {appointment.staffName}
+                            </p>
+                          </div>
                         </div>
+                        <p className="text-sm text-gray-500">
+                          {appointment.appointmentTime}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-500">
-                        {appointment.appointmentDate} -{" "}
-                        {appointment.appointmentTime}
-                      </p>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-gray-500">
+                      No appointments for this day.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

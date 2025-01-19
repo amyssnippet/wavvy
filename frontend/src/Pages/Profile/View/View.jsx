@@ -32,7 +32,7 @@ export function ProfileView() {
 
   // Show a loading state while data is being fetched
   if (!profile) {
-    return <div>Loading...</div>;
+    return <div>Profile Loading...</div>;
   }
 
   return (

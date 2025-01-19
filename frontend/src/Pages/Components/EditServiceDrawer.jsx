@@ -1,61 +1,31 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "../Components/Navbar";
 import AddServiceDrawer from "../Components/AddServices";
-import { Link, Navigate } from "react-router-dom";
+import EditServiceDrawer from "../Components/EditServiceDrawer";
 import AddCategoryDrawer from "../Components/AddCategory";
 import AddPackageDrawer from "../Components/AddPackages";
 import { APIURL } from "@/url.config";
 import { useNavigate } from "react-router-dom";
-import { EllipsisVertical, Heart } from "lucide-react";
-import { Drawer } from "@/components/ui/drawer";
-import { useRef } from "react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { EllipsisVertical } from "lucide-react";
 
 export default function Services() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isPackageDrawerOpen, setIsPackageDrawerOpen] = useState(false);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState(false);
   const [services, setServices] = useState([]);
   const [packages, setPackages] = useState([]);
   const [categories, setCategories] = useState([]);
-  const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState(0);
-  const [popupVisible, setPopupVisible] = useState(false);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [selectedService, setSelectedService] = useState(null);
-  const buttonRef = useRef(null);
-
-  const togglePopup = (event, service) => {
-    event.stopPropagation();
-    const buttonRect = event.currentTarget.getBoundingClientRect();
-    setPopupPosition({
-      x: buttonRect.left,
-      y: buttonRect.bottom,
-    });
-    setSelectedService(service);
-    setPopupVisible((prev) => !prev); // Toggle visibility
-  };
-
-  const closePopup = () => {
-    setPopupVisible(false);
-  };
-
-  const handleEdit = () => {
-    console.log("Edit Service:", selectedService);
-    closePopup();
-  };
-
-  const handleDelete = () => {
-    console.log("Delete Service:", selectedService);
-    closePopup();
-  };
+  const [selectedCategory, setSelectedCategory] = useState(0);
+  const navigate = useNavigate();
   const businessId = localStorage.getItem("businessId");
 
   if (!businessId) {
@@ -120,6 +90,38 @@ export default function Services() {
     }
   };
 
+  const handleDelete = async (serviceId) => {
+    try {
+      const response = await fetch(`${APIURL}/api/services/${serviceId}/`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setServices((prevServices) =>
+          prevServices.filter((service) => service.id !== serviceId)
+        );
+        alert("Service deleted successfully!");
+      } else {
+        alert("Failed to delete service.");
+      }
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      alert("An error occurred while deleting the service.");
+    }
+  };
+
+  const handleEdit = (service) => {
+    setSelectedService(service);
+    setIsEditDrawerOpen(true);
+  };
+
+  const handleServiceUpdated = (updatedService) => {
+    setServices((prevServices) =>
+      prevServices.map((service) =>
+        service.id === updatedService.id ? updatedService : service
+      )
+    );
+  };
+
   return (
     <div>
       <Navbar />
@@ -162,12 +164,12 @@ export default function Services() {
                   </li>
                 ))}
                 <li>
-                  <Link
-                    className="pl-4 underline bg-white text-black pt-auto"
+                  <Button
+                    variant="ghost"
                     onClick={() => setIsCategoryDrawerOpen(true)}
                   >
-                    Add Catgories
-                  </Link>
+                    Add Categories
+                  </Button>
                 </li>
               </ul>
             </div>
@@ -187,12 +189,12 @@ export default function Services() {
                   </li>
                 ))}
                 <li>
-                  <Link
-                    className="pt-auto pl-4 underline text-black"
+                  <Button
+                    variant="ghost"
                     onClick={() => setIsPackageDrawerOpen(true)}
                   >
                     Add Packages
-                  </Link>
+                  </Button>
                 </li>
               </ul>
             </div>
@@ -205,7 +207,7 @@ export default function Services() {
                 ? "All Services"
                 : categories.find((c) => c.id === selectedCategory)?.name}
             </h1>
-            <div className="space-y-11 relative">
+            <div className="space-y-4">
               {services.map((service) => (
                 <Card
                   key={service.id}
@@ -224,16 +226,24 @@ export default function Services() {
                     <PopoverTrigger asChild>
                       <Button variant="outline">
                         <EllipsisVertical
-                          ref={buttonRef}
                           size="20"
-                          onClick={(e) => togglePopup(e, service)}
                           className="cursor-pointer"
                         />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="grid gap-4 w-40 mt-2 drop-shadow-2xl">
-                      <Button variant="outline">Edit</Button>
-                      <Button variant="destructive">Delete</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleEdit(service)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleDelete(service.id)}
+                      >
+                        Delete
+                      </Button>
                     </PopoverContent>
                   </Popover>
                 </Card>
@@ -242,12 +252,17 @@ export default function Services() {
           </div>
         </div>
 
-        {/* Drawer for Adding Items */}
+        {/* Drawers */}
         <AddServiceDrawer
-          className="text-black"
           open={isDrawerOpen}
           onOpenChange={setIsDrawerOpen}
           onServiceAdded={handleServiceAdded}
+        />
+        <EditServiceDrawer
+          open={isEditDrawerOpen}
+          onOpenChange={setIsEditDrawerOpen}
+          serviceId={selectedService?.id}
+          onServiceUpdated={handleServiceUpdated}
         />
         <AddCategoryDrawer
           open={isCategoryDrawerOpen}

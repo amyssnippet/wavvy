@@ -184,7 +184,7 @@ export function ProfileEdit({ onSave, onCancel }) {
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isSaving}>
+        <Button className="bg-purple-600 hover:bg-purple-700" type="submit" disabled={isSaving}>
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>

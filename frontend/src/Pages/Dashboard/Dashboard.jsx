@@ -237,7 +237,7 @@ const Dashboard = () => {
                 </p>
                 <p className="text-lg font-semibold">
                   Price:{" "}
-                  <span className="text-purple-600">${service.price}</span>
+                  <span className="text-purple-600">₹{service.price}</span>
                 </p>
               </CardContent>
             </Card>
