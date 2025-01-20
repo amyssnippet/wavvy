@@ -19,6 +19,8 @@ class Business(models.Model):
     owner_email = models.EmailField()
     gst = models.CharField(max_length=15, blank=True, null=True)
     salon_description = models.TextField(blank=True)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
     profile_img = models.ImageField(upload_to="profiles/", null=True, blank=True, validators=[validate_image_size])
 
     def __str__(self):
@@ -43,6 +45,7 @@ class Services(models.Model):
     duration_in_mins = models.PositiveIntegerField()
     price = models.PositiveIntegerField()
     category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE, null=True, blank=True, related_name="services")
+    service_image = models.ImageField(upload_to="services-images/", null=True, blank=True)
 
     def __str__(self):
         return self.service_name
@@ -76,7 +79,7 @@ class Client(models.Model):
 
 class TeamMember(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_team_members')
-    profile_img = models.ImageField(upload_to="team_members", null=True, blank=True)
+    profile_img = models.ImageField(upload_to="team-profiles/", null=True, blank=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15, unique=True)

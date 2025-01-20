@@ -38,6 +38,7 @@ export default function EditServiceDrawer({
       durationInMins: "",
       price: "",
       categoryId: "",
+      serviceImage: null, // Add serviceImage field for file upload
     },
   });
 
@@ -52,6 +53,7 @@ export default function EditServiceDrawer({
         durationInMins: service.duration_in_mins?.toString() || "",
         price: service.price?.toString() || "",
         categoryId: service.category || "",
+        serviceImage: null, // Reset serviceImage field (no default value for file inputs)
       });
     }
   }, [service, form]);
@@ -78,23 +80,24 @@ export default function EditServiceDrawer({
   }, [businessId]);
 
   const onSubmit = async (data) => {
-    const payload = {
-      service_name: data.serviceName,
-      service_type: data.serviceType,
-      duration_in_mins: parseInt(data.durationInMins),
-      price: parseFloat(data.price),
-      category: data.categoryId,
-      business_id: businessId
-    };
+    // Create a FormData object for file upload
+    const formData = new FormData();
+    formData.append("service_name", data.serviceName);
+    formData.append("service_type", data.serviceType);
+    formData.append("duration_in_mins", parseInt(data.durationInMins));
+    formData.append("price", parseFloat(data.price));
+    formData.append("category", data.categoryId);
+    formData.append("business_id", businessId);
+
+    // Append the service image file if it exists
+    if (data.serviceImage && data.serviceImage[0]) {
+      formData.append("service_image", data.serviceImage[0]);
+    }
 
     try {
       const response = await fetch(`${APIURL}/api/services/${service?.id}/`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-        body: JSON.stringify(payload),
+        body: formData, // Use FormData instead of JSON
       });
 
       if (response.ok) {
@@ -216,6 +219,26 @@ export default function EditServiceDrawer({
                       ))}
                     </SelectContent>
                   </Select>
+                </FormItem>
+              )}
+            />
+
+            {/* Add a file input for service image upload */}
+            <FormField
+              control={form.control}
+              name="serviceImage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service Image</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="image/*" // Accept only image files
+                      onChange={(e) => {
+                        field.onChange(e.target.files); // Update form value with selected file(s)
+                      }}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
