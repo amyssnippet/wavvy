@@ -1,280 +1,239 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Navbar } from "../Components/Navbar";
-import AddServiceDrawer from "../Components/AddServices";
-import EditServiceDrawer from "../Components/EditServiceDrawer";
-import AddCategoryDrawer from "../Components/AddCategory";
-import AddPackageDrawer from "../Components/AddPackages";
-import { APIURL } from "@/url.config";
-import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { EllipsisVertical } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { APIURL } from "@/url.config";
 
-export default function Services() {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const [isPackageDrawerOpen, setIsPackageDrawerOpen] = useState(false);
-  const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState(false);
-  const [services, setServices] = useState([]);
-  const [packages, setPackages] = useState([]);
+export default function EditServiceDrawer({
+  open,
+  onOpenChange,
+  service,
+  onServiceUpdated,
+}) {
   const [categories, setCategories] = useState([]);
-  const [selectedService, setSelectedService] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(0);
-  const navigate = useNavigate();
+  const form = useForm({
+    defaultValues: {
+      serviceName: "",
+      serviceType: "",
+      durationInMins: "",
+      price: "",
+      categoryId: "",
+    },
+  });
+
   const businessId = localStorage.getItem("businessId");
 
-  if (!businessId) {
-    navigate("/login");
-  }
-
-  const handleServiceAdded = (newService) => {
-    setServices((prevServices) => [...prevServices, newService]);
-  };
-
-  const handleCategoryAdded = (newCategory) => {
-    setCategories((prevCategories) => [...prevCategories, newCategory]);
-  };
-
-  const handlePackageAdded = (newPackage) => {
-    setPackages((prevPackages) => [...prevPackages, newPackage]);
-  };
+  useEffect(() => {
+    // Prefill the form if a service is provided
+    if (service) {
+      form.reset({
+        serviceName: service.service_name || "",
+        serviceType: service.service_type || "",
+        durationInMins: service.duration_in_mins?.toString() || "",
+        price: service.price?.toString() || "",
+        categoryId: service.category || "",
+      });
+    }
+  }, [service, form]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    // Fetch categories for dropdown
+    const fetchCategories = async () => {
       try {
         const response = await fetch(`${APIURL}/api/business/${businessId}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.business_categories || []);
+        } else {
+          console.error("Failed to fetch categories");
         }
-        const data = await response.json();
-        setServices(data.business_services || []);
-        setPackages(data.business_packages || []);
-        setCategories([
-          { id: 0, name: "All Services" },
-          ...data.business_categories,
-        ]);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching categories:", error);
       }
     };
 
-    fetchData();
-  }, []);
-
-  const handleCategoryClick = async (categoryId) => {
-    setSelectedCategory(categoryId);
-    if (categoryId === 0) {
-      // Show all services
-      const response = await fetch(`${APIURL}/api/business/${businessId}`);
-      const data = await response.json();
-      setServices(data.business_services || []);
-    } else {
-      // Fetch services for a specific category
-      try {
-        const response = await fetch(
-          `${APIURL}/api/service-categories/${categoryId}/`
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        setServices(data.services || []);
-      } catch (error) {
-        console.error("Error fetching services by category:", error);
-      }
+    if (businessId) {
+      fetchCategories();
     }
-  };
+  }, [businessId]);
 
-  const handleDelete = async (serviceId) => {
+  const onSubmit = async (data) => {
+    const payload = {
+      service_name: data.serviceName,
+      service_type: data.serviceType,
+      duration_in_mins: parseInt(data.durationInMins),
+      price: parseFloat(data.price),
+      category: data.categoryId,
+      business_id: businessId
+    };
+
     try {
-      const response = await fetch(`${APIURL}/api/services/${serviceId}/`, {
-        method: "DELETE",
+      const response = await fetch(`${APIURL}/api/services/${service?.id}/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify(payload),
       });
+
       if (response.ok) {
-        setServices((prevServices) =>
-          prevServices.filter((service) => service.id !== serviceId)
-        );
-        alert("Service deleted successfully!");
+        const updatedService = await response.json();
+        alert("Service updated successfully!");
+        form.reset(); // Clear the form
+        onOpenChange(false); // Close the drawer
+        onServiceUpdated(updatedService); // Update the service list in parent
       } else {
-        alert("Failed to delete service.");
+        const errorData = await response.json();
+        alert("Failed to update service: " + JSON.stringify(errorData));
       }
     } catch (error) {
-      console.error("Error deleting service:", error);
-      alert("An error occurred while deleting the service.");
+      console.error("Error updating service:", error);
+      alert("An error occurred. Please try again.");
     }
-  };
-
-  const handleEdit = (service) => {
-    setSelectedService(service);
-    setIsEditDrawerOpen(true);
-  };
-
-  const handleServiceUpdated = (updatedService) => {
-    setServices((prevServices) =>
-      prevServices.map((service) =>
-        service.id === updatedService.id ? updatedService : service
-      )
-    );
   };
 
   return (
-    <div>
-      <Navbar />
-      <div className="p-8 bg-white">
-        <div className="flex items-center mb-4 justify-between py-8">
-          <div className="flex flex-col mb-7">
-            <span className="text-black font-bold text-3xl">Service Menu</span>
-            <span className="text-gray-500 font-thin text-xl">
-              View and manage the services offered by your business
-            </span>
-          </div>
-          <div className="space-x-4">
-            <Button
-              variant="secondary"
-              className="bg-purple-600 text-white hover:bg-purple-700 px-4 py-2 px-10 rounded-lg"
-              onClick={() => setIsDrawerOpen(true)}
-            >
-              Add
-            </Button>
-          </div>
-        </div>
-        <div className="flex mt-10">
-          {/* Sidebar */}
-          <div className="w-1/4 p-4 bg-gray-100">
-            {/* Categories Section */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2">Categories</h2>
-              <ul className="space-y-2">
-                {categories.map((category) => (
-                  <li key={category.id}>
-                    <Button
-                      variant={
-                        selectedCategory === category.id ? "solid" : "ghost"
-                      }
-                      className="w-full justify-between"
-                      onClick={() => handleCategoryClick(category.id)}
-                    >
-                      {category.name}
-                    </Button>
-                  </li>
-                ))}
-                <li>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setIsCategoryDrawerOpen(true)}
-                  >
-                    Add Categories
-                  </Button>
-                </li>
-              </ul>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit Service</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="serviceName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter service name" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="serviceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service Type</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select service type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Basic">Basic</SelectItem>
+                      <SelectItem value="Premium">Premium</SelectItem>
+                      <SelectItem value="Add-on">Add-on</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="durationInMins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duration (mins)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Enter duration in minutes"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price (₹)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Enter price"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {/* Packages Section */}
-            <div>
-              <h2 className="text-lg font-semibold mb-2">Packages</h2>
-              <ul className="space-y-2">
-                {packages.map((pkg) => (
-                  <li key={pkg.id}>
-                    <Button variant="ghost" className="w-full justify-between">
-                      {pkg.package_name}
-                      <span className="bg-gray-300 px-2 py-1 rounded-full">
-                        ₹{pkg.package_price}
-                      </span>
-                    </Button>
-                  </li>
-                ))}
-                <li>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setIsPackageDrawerOpen(true)}
-                  >
-                    Add Packages
-                  </Button>
-                </li>
-              </ul>
-            </div>
-          </div>
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="text-black">
+                      {categories.map((category) => (
+                        <SelectItem
+                          className="text-black"
+                          key={category.id}
+                          value={category.id}
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
 
-          {/* Main Content */}
-          <div className="w-3/4 p-4">
-            <h1 className="text-xl font-bold mb-4">
-              {selectedCategory === 0
-                ? "All Services"
-                : categories.find((c) => c.id === selectedCategory)?.name}
-            </h1>
-            <div className="space-y-4">
-              {services.map((service) => (
-                <Card
-                  key={service.id}
-                  className="flex justify-between items-center p-4"
-                >
-                  <div>
-                    <h3 className="font-medium">{service.service_name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {service.duration_in_mins} mins
-                    </p>
-                  </div>
-                  <p className="text-lg font-semibold ml-auto p-4">
-                    ₹{service.price}
-                  </p>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline">
-                        <EllipsisVertical
-                          size="20"
-                          className="cursor-pointer"
-                        />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="grid gap-4 w-40 mt-2 drop-shadow-2xl">
-                      <Button
-                        variant="outline"
-                        onClick={() => handleEdit(service)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleDelete(service.id)}
-                      >
-                        Delete
-                      </Button>
-                    </PopoverContent>
-                  </Popover>
-                </Card>
-              ))}
+            <div className="flex justify-end gap-4 pt-4">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                Update Service
+              </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Drawers */}
-        <AddServiceDrawer
-          open={isDrawerOpen}
-          onOpenChange={setIsDrawerOpen}
-          onServiceAdded={handleServiceAdded}
-        />
-        <EditServiceDrawer
-          open={isEditDrawerOpen}
-          onOpenChange={setIsEditDrawerOpen}
-          serviceId={selectedService?.id}
-          onServiceUpdated={handleServiceUpdated}
-        />
-        <AddCategoryDrawer
-          open={isCategoryDrawerOpen}
-          onOpenChange={setIsCategoryDrawerOpen}
-          onCategoryAdded={handleCategoryAdded}
-        />
-        <AddPackageDrawer
-          open={isPackageDrawerOpen}
-          onOpenChange={setIsPackageDrawerOpen}
-          onPackageAdded={handlePackageAdded}
-        />
-      </div>
-    </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
