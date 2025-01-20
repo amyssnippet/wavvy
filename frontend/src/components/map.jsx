@@ -4,11 +4,15 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // Fix for default marker icon in Leaflet
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  iconUrl: require("leaflet/dist/images/marker-icon.png"),
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
 });
 
 const MapPicker = ({ onLocationSelect }) => {
@@ -24,7 +28,7 @@ const MapPicker = ({ onLocationSelect }) => {
     <MapContainer
       center={position}
       zoom={13}
-      style={{ height: "400px", width: "100%" }}
+      style={{ height: "100px", width: "100px" }}
       onClick={handleMapClick}
     >
       <TileLayer

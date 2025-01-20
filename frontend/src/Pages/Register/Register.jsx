@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import logo from "../../assets/logo.svg";
 import r from "../../assets/regsiter.svg";
 import { APIURL } from "@/url.config";
+import MapPicker from "@/components/map";
 
 export function Register() {
   const [ownerName, setOwnerName] = useState("");
@@ -14,6 +15,8 @@ export function Register() {
   const [description, setDescription] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(""); // State for phone number
   const [profileImg, setProfileImg] = useState(null);
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -28,8 +31,18 @@ export function Register() {
     }
   }, []);
 
+  const handleLocationSelect = ({ latitude, longitude }) => {
+    setLatitude(latitude);
+    setLongitude(longitude);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!latitude || !longitude) {
+      setError("Please select a location on the map.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("owner_name", ownerName);
@@ -38,6 +51,8 @@ export function Register() {
     formData.append("phone_number", phoneNumber);
     formData.append("gst", gst);
     formData.append("salon_description", description);
+    formData.append("latitude", latitude);
+    formData.append("longitude", longitude);
     if (profileImg) {
       formData.append("profile_img", profileImg);
     }
@@ -148,6 +163,10 @@ export function Register() {
             onChange={(e) => setProfileImg(e.target.files[0])}
             className="w-full"
           />
+          <div>
+            <label>Select Location on Map</label>
+            <MapPicker onLocationSelect={handleLocationSelect} />
+          </div>
           <Button
             type="submit"
             className="w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700"
