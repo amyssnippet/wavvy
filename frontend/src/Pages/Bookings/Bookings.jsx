@@ -175,29 +175,40 @@ export function Bookings() {
         </div>
 
         <div className="bg-white shadow-xl rounded-lg">
-          {loading ? (
-            <div className="text-center py-10">Loading...</div>
-          ) : error ? (
-            <div className="text-center text-red-500 py-10">{error}</div>
-          ) : (
-            <Table className="w-full bg-white shadow-xl rounded-lg">
-              <TableHeader>
+          <Table className="w-full bg-white shadow-xl rounded-lg">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Client</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Pay Mode</TableHead>
+                <TableHead>Services/Packages</TableHead>
+                <TableHead>Staff</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Total Amount</TableHead>
+                <TableHead>Payment Status</TableHead>
+                <TableHead>Appointment Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
                 <TableRow>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Pay Mode</TableHead>
-                  <TableHead>Services/Packages</TableHead>
-                  <TableHead>Staff</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Payment Status</TableHead> {/* New column */}
-                  <TableHead>Appointment Status</TableHead> {/* New column */}
-                  <TableHead>Actions</TableHead>
+                  <TableCell colSpan={11} className="text-center py-10">
+                    Loading...
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appointments.map((appointment) => (
+              ) : error ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={11}
+                    className="text-center text-red-500 py-10"
+                  >
+                    {error}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                appointments.map((appointment) => (
                   <TableRow key={appointment.id}>
                     <TableCell>
                       {appointment.client?.client_name || "Unknown"}
@@ -224,10 +235,8 @@ export function Bookings() {
                     <TableCell>{appointment.appointment_date}</TableCell>
                     <TableCell>{appointment.appointment_time}</TableCell>
                     <TableCell>₹{appointment.total_amount}</TableCell>
-                    <TableCell>{appointment.payment_status}</TableCell>{" "}
-                    {/* Payment Status */}
-                    <TableCell>{appointment.status}</TableCell>{" "}
-                    {/* Appointment Status */}
+                    <TableCell>{appointment.payment_status}</TableCell>
+                    <TableCell>{appointment.status}</TableCell>
                     <TableCell className="flex space-x-2">
                       <button
                         className="text-blue-500 hover:underline"
@@ -238,7 +247,6 @@ export function Bookings() {
                       >
                         <PenIcon size={20} />
                       </button>
-
                       <button
                         className="text-red-500 hover:underline"
                         onClick={() => handleDelete(appointment.id)}
@@ -247,10 +255,10 @@ export function Bookings() {
                       </button>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 

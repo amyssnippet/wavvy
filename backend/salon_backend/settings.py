@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     "api",
     "rest_framework",
     "corsheaders",
-    "rest_framework_simplejwt"
+    "rest_framework_simplejwt",
+    "rest_framework.authtoken",
 ]
 
 REST_FRAMEWORK = {
@@ -113,7 +114,7 @@ TWILIO_PHONE_NUMBER = config("TWILIO_PHONE_NUMBER")
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'wavvy',
+        'NAME': 'hola_wavve',
         'USER': 'amol',
         'PASSWORD': 'amol6125',
         'HOST': 'localhost',

@@ -1,7 +1,15 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment, Packages
+from .models import Business, OTP, ServiceCategory, Services, Client, TeamMember, Appointment, Packages, Customer
 from phonenumber_field.serializerfields import PhoneNumberField
+
+class CustomerSerializer(serializers.ModelSerializer) :
+    class Meta:
+        model = Customer 
+        fields = ('id', 'unique_id', 'name', 'email', 
+                  'phone_number', 'date_of_birth', 
+                  'created_at', 'profile_picture')
+        read_only_fields = ['unique_id', 'created_at']
 
 class ClientSerializer(serializers.ModelSerializer):
     business_id = serializers.IntegerField(write_only=True)
@@ -185,6 +193,7 @@ class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
         fields = '__all__'
+        read_only_fields = ['created_at']
 
     def create(self, validated_data):
         business = Business.objects.create(**validated_data)

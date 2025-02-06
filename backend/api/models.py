@@ -5,6 +5,8 @@ import random
 from phonenumber_field.modelfields import PhoneNumberField
 from datetime import timedelta
 from django.utils.timezone import now
+from django.contrib.auth.models import User
+import string
 
 # Validation for image size
 def validate_image_size(file):
@@ -13,6 +15,7 @@ def validate_image_size(file):
         raise ValidationError("File size exceeds the 2 MB limit.")
 
 class Business(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
     phone_number = models.CharField(max_length=20, unique=True)
     owner_name = models.CharField(max_length=100)
     salon_name = models.CharField(max_length=100)
@@ -25,6 +28,29 @@ class Business(models.Model):
 
     def __str__(self):
         return self.salon_name
+    
+def generate_unique_id() : 
+    length = 8
+    while True :
+        unique_id = ''.join(random.choices(string.ascii_uppercase, k=length))
+        if Customer.objects.filter(unique_id = unique_id).count() == 0 :
+            break
+    return unique_id
+
+def validate_image_size(file):
+    max_size = 2 * 1024 * 1024  # 2 MB
+    if file.size > max_size:
+        raise ValidationError("File size exceeds the 2 MB limit.")
+# Create your models here.
+class Customer(models.Model) :
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile', null=True, blank=True)
+    unique_id = models.CharField(max_length= 10, default="", unique=True)
+    name = models.CharField(max_length=50, null=False)
+    email = models.EmailField(null=False)
+    phone_number = models.CharField(max_length=15, null=False)
+    date_of_birth = models.DateField(null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    profile_picture = models.ImageField(null=True, blank=True, validators=[validate_image_size])
 
 class ServiceCategory(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='business_categories')
@@ -60,6 +86,7 @@ class Packages(models.Model):
         return self.package_name
 
 class Client(models.Model):
+    profile_img_clients = models.ImageField(upload_to="client-profiles/", null=True, blank=True)
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='clients')
     client_name = models.CharField(max_length=255)
     client_type = models.CharField(

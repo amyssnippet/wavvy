@@ -76,7 +76,7 @@ export function InviteDrawer({ open, onOpenChange, addTeamMember }) {
           window.location.reload();
         }, 1);
       } else {
-        alert("Failed to add team member. Please try again.");
+        alert("Email or Phone Already Exists!");
       }
     } catch (error) {
       console.error("Error adding team member:", error);

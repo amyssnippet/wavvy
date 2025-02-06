@@ -20,6 +20,10 @@ from .views import (
     PackagesDetailView,
     client_metadata_view
 )
+from django.urls import path
+from .views import CustomerView, CustomerListView, signup_create_user, login, test_token, verify_otp, signup
+from .views import CustomerProfileView, CustomerProfileUpdateView, CustomerProfileDeleteView, get_Business_by_location, ServiceFilterView
+from .views import BusinessDetailView, BusinessServicesView, AppointmentCreateView, AppointmentStatusView, AppointmentCancelView
 
 urlpatterns = [
     # Services
@@ -55,4 +59,24 @@ urlpatterns = [
     path('check-business/', CheckBusinessView.as_view(), name='check-business'),
     path('send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+    
+    # APP URLS
+    
+    path('post', CustomerView.as_view()),
+    path('get', CustomerListView.as_view()),
+    path('auth/signup', signup),
+    path('auth/signup_create_user', signup_create_user),
+    path('auth/login', login),
+    path('auth/verify-otp', verify_otp ),
+    path('auth/test_token', test_token),
+    path('profile/view', CustomerProfileView.as_view(), name='view-profile'),
+    path('profile/update', CustomerProfileUpdateView.as_view(), name='update-profile'),
+    path('profile/delete', CustomerProfileDeleteView.as_view(), name='delete-profile'),
+    path('salons/', get_Business_by_location, name='get_salons_by_location'),
+    path('services/filter', ServiceFilterView.as_view(), name='service_filter'),
+    path('salons/<int:salon_id>', BusinessDetailView.as_view(), name='salon_detail'),
+    path('salons/<int:salon_id>/services', BusinessServicesView.as_view(), name='salon_services'),
+    path('bookings/create', AppointmentCreateView.as_view(), name='create_booking'),
+    path('bookings/<int:booking_id>/cancel', AppointmentCancelView.as_view(), name='cancel_booking'),
+    path('bookings/status', AppointmentStatusView.as_view(), name='booking_status'),
 ]

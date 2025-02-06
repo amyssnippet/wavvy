@@ -22,7 +22,6 @@ import {
 } from "chart.js";
 import { useNavigate } from "react-router-dom";
 import { APIURL } from "@/url.config";
-
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -70,7 +69,9 @@ const Dashboard = () => {
 
   // Early return for loading or error states
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <>Loading...</>
+    );
   }
 
   if (error) {
